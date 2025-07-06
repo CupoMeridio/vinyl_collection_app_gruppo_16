@@ -154,11 +154,6 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // === RECENT VINYLS SECTION: Sezione vinili recenti ===
-  
-  
-  // === FAVORITE VINYLS SECTION: Sezione vinili preferiti ===
-
   
   // === QUICK STATS SECTION: Sezione statistiche rapide ===
   Widget _buildQuickStatsSection(BuildContext context) {
@@ -199,8 +194,5 @@ class _HomeViewState extends State<HomeView> {
     );
   }
   
-  // === RANDOM VINYLS SECTION: sezione vinili consigliati casualmente ===
-          
-
 }
 

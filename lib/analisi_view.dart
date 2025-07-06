@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';
-
+import 'package:vinyl_collection_app_gruppo_16/models/section.dart';
 import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
 class AnalisiView extends StatelessWidget {
   const AnalisiView({super.key});
@@ -33,7 +33,7 @@ class AnalisiView extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.blue,
+          backgroundColor: AppConstants.primaryColor,
           foregroundColor: Colors.white,
         ),
       ),
@@ -100,7 +100,7 @@ class AnalisiView extends StatelessWidget {
                 SizedBox(
                    width: 700,
                   height: 500,
-                  child: Ultime5Canzoni(),
+                  child: Ultime5Vinili(),
                 )
               ],
             ),
@@ -313,12 +313,12 @@ class DatiGrafico{
 }
 
 
-class Ultime5Canzoni extends StatelessWidget {
-  const Ultime5Canzoni({super.key});
+class Ultime5Vinili extends StatelessWidget {
+  const Ultime5Vinili({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
+    return FutureBuilder<List<Vinyl>>(
       future: DatabaseService().getRecentVinyls(limit:5),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -328,17 +328,18 @@ class Ultime5Canzoni extends StatelessWidget {
           return const Center(child: Text('Errore nel caricamento dei dati'));
         }
 
-        final List<dynamic> canzoni = snapshot.data!;
-        return ListView.builder(
-          itemCount: canzoni.length,
-          itemBuilder: (context, index) {
-            final canzone = canzoni[index];
-            return ListTile(
-              title: Text(canzone['title']),
-              subtitle: Text(canzone['artist']),
-            );
-          },
+        final List<dynamic> vinili = snapshot.data!;
+        return buildSection(
+          'Ultimi 5 Vinili Aggiunti',
+          'Nessun vinile aggiunto di recente',
+          'Aggiungi un vinile per vederlo qui',
+          Icons.album,
+          Icons.music_note,
+          null, // No navigation for this section
+          vinili.cast<Vinyl>(), // Cast to List<Vinyl>
+          context,
         );
+        //Widget buildSection(String title, String missingPhrase, String missingSubtitle, IconData mainIcon, IconData emptyIcon, String? navigation, List<Vinyl> list, BuildContext context)
       },
     );
   }

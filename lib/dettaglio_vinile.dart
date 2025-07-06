@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'models/song_.dart';
 import 'models/vinyl.dart';
+import 'dart:io';
 
 class ViewDisco extends StatelessWidget {
   final Vinyl vinile;
@@ -15,14 +17,19 @@ class ViewDisco extends StatelessWidget {
             MainAxisSize.min, // Ensure column only takes necessary space
         children: [
           SizedBox(
-            width: 200.0,
-            height: 200.0,
-            child: Image.network(
-             vinile.imagePath ?? 'https://via.placeholder.com/200', // Fallback image if null
-              fit: BoxFit.cover, // Cover the box while maintaining aspect ratio
+            width: 200,
+            height: 200,
+            child: vinile.imagePath != null
+                                ? Image.file(
+                                    File(vinile.imagePath!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                                    child: Icon(Icons.album, color: AppConstants.primaryColor.withValues(alpha: 0.5), size: 100),
+                                  ), // Cover the box while maintaining aspect ratio
             ),
-          ),
-          //const SizedBox(height: 8.0),
+
           Text(
             vinile.title, // Use actual data from vinile
             style: Theme.of(context).textTheme.headlineSmall,
@@ -32,6 +39,28 @@ class ViewDisco extends StatelessWidget {
             vinile.artist, // Use actual data from vinile
             style: Theme.of(context).textTheme.bodyMedium,
           ),
+          const SizedBox(height: 4.0),
+          Text(
+            'Anno: ${vinile.year}'),
+          const SizedBox(height: 4.0),
+          Text(
+            'Genere: ${vinile.genre}'),
+          const SizedBox(height: 4.0),
+          Text(
+            'Casa Discografica: ${vinile.label}'),
+          const SizedBox(height: 4.0),
+          if(vinile.notes != null && vinile.notes!.isNotEmpty)
+          ...[
+          Text(
+            'Note Personali: ${vinile.notes}'),
+          const SizedBox(height: 4.0)
+          ],
+          Text(
+            'Condizioni: ${vinile.condition}'),
+          const SizedBox(height: 4.0),
+          Text(
+            'Data di aggiunta: ${vinile.dateAdded.toLocal().toString().split(' ')[0]}'), // Format date to show only the date part
+          const SizedBox(height: 4.0)
         ],
       ),
     );
@@ -75,7 +104,8 @@ class SchermataDettaglio extends StatelessWidget {
             },
           ),
           title: const Text('Dettaglio Vinile'),
-          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          backgroundColor: AppConstants.primaryColor,
         ),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
