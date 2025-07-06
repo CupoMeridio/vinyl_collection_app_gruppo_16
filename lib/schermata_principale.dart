@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import 'home_view.dart';
 import 'search_view.dart';
 import 'analisi_view.dart';
+import 'categorie_view.dart';
+import 'genre_vinyls_view.dart';
 import 'services/vinyl_provider.dart';
 import 'utils/constants.dart';
 import 'dettaglio_vinile.dart';
 import 'models/vinyl.dart';
-import 'lista_vinili_view.dart';
+
 
 
 class SchermataP extends StatefulWidget {
@@ -73,10 +75,14 @@ class _SchermataPState extends State<SchermataP> {
         initialRoute: '/',
         routes: {
           '/search_View': (context) => const SearchView(),
-          'analisi_view': (context) => const AnalisiView(),
+          '/analisi_view': (context) => const AnalisiView(),
           '/home_view': (context) => const HomeView(),
+          '/categorie': (context) => const CategorieView(),
+          '/GenreVinyls': (context) {
+            final genre = ModalRoute.of(context)!.settings.arguments as String;
+            return GenreVinylsView(genre: genre);
+          },
 
-          '/listaVinili_view': (context) => const ListaViniliView(),
           '/DettaglioVinile': (context) {
             final vinyl = ModalRoute.of(context)!.settings.arguments as Vinyl;
             return SchermataDettaglio(

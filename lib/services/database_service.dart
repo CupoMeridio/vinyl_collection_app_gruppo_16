@@ -21,6 +21,9 @@ class DatabaseService {
   // Istanza singleton del servizio database (static = condivisa tra tutte le istanze)
   static final DatabaseService _instance = DatabaseService._internal();
   
+  // Flag per evitare di impostare il factory più volte
+  static bool _factoryInitialized = false;
+  
   // Factory constructor: restituisce sempre la stessa istanza invece di crearne una nuova
   // MOTIVO: Garantisce che ci sia sempre una sola connessione al database
   factory DatabaseService() => _instance;
@@ -47,10 +50,11 @@ class DatabaseService {
   // Metodo privato per inizializzare il database
   // ASYNC: Le operazioni di file system sono asincrone per non bloccare l'UI
   Future<Database> _initDatabase() async {
-    // Inizializza il database factory per web/desktop se necessario
-    if (kIsWeb) {
+    // Inizializza il database factory per web/desktop se necessario (solo una volta)
+    if (kIsWeb && !_factoryInitialized) {
       // Per il web, usa sqflite_common_ffi_web
       databaseFactory = databaseFactoryFfiWeb;
+      _factoryInitialized = true;
     }
     
     // JOIN: Combina il percorso della directory database con il nome del file
@@ -628,6 +632,51 @@ class DatabaseService {
         await txn.insert(AppConstants.songsTable, songMap);
       }
     });
+  }
+
+  // === OPERAZIONI CRUD AGGIUNTIVE PER CATEGORIE ===
+  
+  // Inserisce una nuova categoria
+  Future<int> insertCategory(models.Category category) async {
+    final db = await database;
+    return await db.insert(AppConstants.categoryTable, category.toMap());
+  }
+  
+  // Aggiorna una categoria esistente
+  Future<void> updateCategory(models.Category category) async {
+    final db = await database;
+    await db.update(
+      AppConstants.categoryTable,
+      category.toMap(),
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+  }
+  
+  // Elimina una categoria
+  Future<void> deleteCategory(int id) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.categoryTable,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+  
+  // Recupera una categoria per nome
+  Future<models.Category?> getCategoryByName(String name) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      AppConstants.categoryTable,
+      where: 'name = ?',
+      whereArgs: [name],
+      limit: 1,
+    );
+    
+    if (maps.isNotEmpty) {
+      return models.Category.fromMap(maps.first);
+    }
+    return null;
   }
 
   // Chiude la connessione al database

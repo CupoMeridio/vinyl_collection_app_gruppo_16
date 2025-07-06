@@ -449,6 +449,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             
             // TITLE FIELD: Campo titolo
             TextFormField(
+              key: Key('vinyl_title_field'),
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Titolo *',
@@ -466,6 +467,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             
             // ARTIST FIELD: Campo artista
             TextFormField(
+              key: Key('vinyl_artist_field'),
               controller: _artistController,
               decoration: InputDecoration(
                 labelText: 'Artista *',
@@ -488,6 +490,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 Expanded(
                   flex: 1,
                   child: TextFormField(
+                    key: Key('vinyl_year_field'),
                     controller: _yearController,
                     decoration: InputDecoration(
                       labelText: 'Anno *',
@@ -508,6 +511,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 Expanded(
                   flex: 2,
                   child: TextFormField(
+                    key: Key('vinyl_label_field'),
                     controller: _labelController,
                     decoration: InputDecoration(
                       labelText: 'Etichetta *',
@@ -553,6 +557,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             
             // GENRE DROPDOWN: Selezione genere
             DropdownButtonFormField<String>(
+              key: Key('vinyl_genre_field'),
               value: _selectedGenre,
               decoration: InputDecoration(
                 labelText: 'Genere',
@@ -578,6 +583,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             
             // CONDITION DROPDOWN: Selezione condizione
             DropdownButtonFormField<String>(
+              key: Key('vinyl_condition_field'),
               value: _selectedCondition,
               decoration: InputDecoration(
                 labelText: 'Condizione',
@@ -650,6 +656,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             
             // NOTES FIELD: Campo note multilinea
             TextFormField(
+              key: Key('vinyl_notes_field'),
               controller: _notesController,
               decoration: InputDecoration(
                 labelText: 'Note (opzionale)',

@@ -273,7 +273,7 @@ Widget buildStatCard(String title, String value, IconData icon, Color color) {
     );
   }
 
-Widget buildSection(String title, String missingPhrase, String missingSubtitle, IconData mainIcon, IconData emptyIcon, String? navigation, List<Vinyl> list, BuildContext context) {
+Widget buildSection(String title, String missingPhrase, String missingSubtitle, IconData mainIcon, IconData emptyIcon, dynamic navigation, List<Vinyl> list, BuildContext context) {
     return Consumer<VinylProvider>(
       builder: (context, provider, child) {
         return Column(
@@ -283,15 +283,16 @@ Widget buildSection(String title, String missingPhrase, String missingSubtitle, 
                     children: [
                 buildSectionHeader(title, mainIcon),
                 if (navigation != null)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, navigation);
+                  TextButton.icon(
+                    onPressed: () {
+                      if (navigation is String) {
+                        Navigator.pushNamed(context, navigation);
+                      } else if (navigation is Function) {
+                        navigation();
+                      }
                     },
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      color: AppConstants.primaryColor,
-                      size: 16
-                    ),
+                    icon: Icon(Icons.arrow_forward),
+                    label: Text('Vedi tutti'),
                   ),
                     ],
                   ),

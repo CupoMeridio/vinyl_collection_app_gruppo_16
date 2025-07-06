@@ -352,8 +352,100 @@ class VinylProvider with ChangeNotifier {
     _filteredVinyls = []; // CLEAR CACHE: Forza uso lista completa
     notifyListeners();
   }
-
-  // CORE FILTERING ALGORITHM: Applicazione filtri combinati
+  
+  // FAVORITES FILTER: Filtro per vinili preferiti
+  void filterByFavorites(bool showOnlyFavorites) {
+    if (showOnlyFavorites) {
+      _filteredVinyls = _vinyls.where((vinyl) => vinyl.isFavorite).toList();
+    } else {
+      _filteredVinyls = List.from(_vinyls);
+    }
+    notifyListeners();
+  }
+  
+  // YEAR FILTER: Filtro per anno
+  void filterByYear(int year) {
+    _filteredVinyls = _vinyls.where((vinyl) => vinyl.year == year).toList();
+    notifyListeners();
+  }
+  
+  // SORT VINYLS: Ordinamento vinili
+  void sortVinyls(String sortBy) {
+    List<Vinyl> sorted = List.from(_vinyls);
+    
+    switch (sortBy) {
+      case 'title':
+        sorted.sort((a, b) => a.title.compareTo(b.title));
+        break;
+      case 'artist':
+        sorted.sort((a, b) => a.artist.compareTo(b.artist));
+        break;
+      case 'year':
+        sorted.sort((a, b) => a.year.compareTo(b.year));
+        break;
+      case 'recent':
+        sorted.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+        break;
+      case 'random':
+        sorted.shuffle();
+        break;
+      default:
+        // Nessun ordinamento
+        break;
+    }
+    
+    _filteredVinyls = sorted;
+     notifyListeners();
+   }
+   
+   // ADVANCED FILTERS: Applica filtri combinati
+   void applyAdvancedFilters({
+     String? genre,
+     int? year,
+     bool favoritesOnly = false,
+     String sortBy = 'title',
+   }) {
+     List<Vinyl> filtered = List.from(_vinyls);
+     
+     // Applica filtro per genere
+     if (genre != null) {
+       filtered = filtered.where((vinyl) => vinyl.genre == genre).toList();
+     }
+     
+     // Applica filtro per anno
+     if (year != null) {
+       filtered = filtered.where((vinyl) => vinyl.year == year).toList();
+     }
+     
+     // Applica filtro per preferiti
+     if (favoritesOnly) {
+       filtered = filtered.where((vinyl) => vinyl.isFavorite).toList();
+     }
+     
+     // Applica ordinamento
+     switch (sortBy) {
+       case 'title':
+         filtered.sort((a, b) => a.title.compareTo(b.title));
+         break;
+       case 'artist':
+         filtered.sort((a, b) => a.artist.compareTo(b.artist));
+         break;
+       case 'year':
+         filtered.sort((a, b) => a.year.compareTo(b.year));
+         break;
+       case 'recent':
+         filtered.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+         break;
+       case 'random':
+         filtered.shuffle();
+         break;
+     }
+     
+     _filteredVinyls = filtered;
+     notifyListeners();
+   }
+ 
+   // CORE FILTERING ALGORITHM: Applicazione filtri combinati
   // PATTERN: Pipeline Processing per filtri sequenziali
   // PERFORMANCE: Early termination se nessun filtro attivo
   void _applyFilters() {

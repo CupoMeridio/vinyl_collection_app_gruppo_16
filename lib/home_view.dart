@@ -6,6 +6,7 @@ import 'services/vinyl_provider.dart';
 import 'screens/add_edit_vinyl_screen.dart';
 import 'utils/constants.dart';
 import "../models/section.dart";
+import 'search_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -38,7 +39,17 @@ class _HomeViewState extends State<HomeView> {
                       "Inizia aggiungendo il tuo primo vinile alla collezione!", 
                       Icons.schedule, 
                       Icons.album, 
-                      "/listaVinili_view", 
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SearchView(
+                              sortBy: 'recent',
+                              title: 'Vinili Recenti',
+                            ),
+                          ),
+                        );
+                      }, 
                       (Provider.of<VinylProvider>(context).recentVinyls), 
                       context),
                       SizedBox(height: AppConstants.spacingLarge),
@@ -50,7 +61,17 @@ class _HomeViewState extends State<HomeView> {
                         "Marca i tuoi vinili preferiti per vederli qui!",
                         Icons.favorite,
                         Icons.favorite_border,
-                        null, // Nessuna navigazione
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchView(
+                                showFavoritesOnly: true,
+                                title: 'I Tuoi Preferiti',
+                              ),
+                            ),
+                          );
+                        },
                         Provider.of<VinylProvider>(context).favoriteVinyls,
                         context,
                       ),
@@ -63,7 +84,17 @@ class _HomeViewState extends State<HomeView> {
                         "Aggiungi vinili alla tua collezione per ricevere consigli!",
                         Icons.recommend,
                         Icons.recommend,
-                        null, // Nessuna navigazione
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchView(
+                                sortBy: 'random',
+                                title: 'Vinili Consigliati',
+                              ),
+                            ),
+                          );
+                        },
                         Provider.of<VinylProvider>(context).randomVinyls,
                         context,
                       ),
@@ -71,6 +102,10 @@ class _HomeViewState extends State<HomeView> {
 
                       // === STATS: Statistiche rapide ===
                       _buildQuickStatsSection(context),
+                      SizedBox(height: AppConstants.spacingLarge),
+                      
+                      // === CATEGORIES: Accesso rapido alle categorie ===
+                      _buildCategoriesSection(context),
                     ],
                   ),
                 ),
@@ -134,22 +169,7 @@ class _HomeViewState extends State<HomeView> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap:() => Navigator.pushNamed(context, '/profile_view'),
-          child: 
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppConstants.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-            ),
-            child: Icon(
-              Icons.account_circle,
-              color: AppConstants.primaryColor,
-              size: 32,
-            ),
-          ),
-        ),
+// Icona profilo rimossa
       ],
     );
   }
@@ -191,6 +211,183 @@ class _HomeViewState extends State<HomeView> {
           ],
         );
       },
+    );
+  }
+  
+  // === CATEGORIES SECTION: Sezione accesso categorie ===
+  Widget _buildCategoriesSection(BuildContext context) {
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        final genreDistribution = provider.genreDistribution;
+        final topGenres = genreDistribution.entries
+            .where((entry) => entry.value > 0)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value))
+          ..take(4).toList();
+        
+        return Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                buildSectionHeader(
+                  'Categorie Musicali',
+                  Icons.library_music,
+                ),
+                TextButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/categorie');
+                        },
+                        icon: Icon(Icons.arrow_forward),
+                        label: Text('Vedi tutte'),
+                      ),
+              ],
+            ),
+            SizedBox(height: AppConstants.spacingMedium),
+            
+            if (topGenres.isEmpty)
+              Container(
+                height: 120,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.library_music,
+                        color: Colors.grey[400],
+                        size: 48,
+                      ),
+                      SizedBox(height: AppConstants.spacingSmall),
+                      Text(
+                        'Nessuna categoria',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Aggiungi vinili per vedere le categorie',
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppConstants.spacingMedium,
+                  mainAxisSpacing: AppConstants.spacingMedium,
+                  childAspectRatio: 2.5,
+                ),
+                itemCount: topGenres.length,
+                itemBuilder: (context, index) {
+                  final genre = topGenres[index];
+                  return _buildGenreCard(genre.key, genre.value);
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // === GENRE CARD: Widget per singola categoria ===
+  Widget _buildGenreCard(String genre, int count) {
+    final genreColors = {
+      'Rock': Colors.red,
+      'Pop': Colors.blue,
+      'Jazz': Colors.green,
+      'Blues': Colors.brown,
+      'Classical': Colors.purple,
+      'Electronic': Colors.cyan,
+      'Hip Hop': Colors.orange,
+      'Country': Colors.lime,
+      'Folk': Colors.teal,
+      'Reggae': Colors.lightGreen,
+      'Punk': Colors.pink,
+      'Metal': Colors.grey,
+      'R&B': Colors.deepPurple,
+      'Soul': Colors.amber,
+      'Funk': Colors.deepOrange,
+    };
+    
+    final color = genreColors[genre] ?? Colors.indigo;
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/GenreVinyls',
+          arguments: genre,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(AppConstants.paddingMedium),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.music_note,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+              SizedBox(width: AppConstants.spacingSmall),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      genre,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      count == 1 ? '$count vinile' : '$count vinili',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
   
