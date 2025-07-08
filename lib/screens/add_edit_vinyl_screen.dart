@@ -189,6 +189,17 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       } else {
         // OPERATION: Modifica vinile esistente
         success = await provider.updateVinyl(vinyl);
+        widget.vinyl?.artist   = vinyl.artist; // Aggiorna artista
+        widget.vinyl?.title    = vinyl.title; // Aggiorna titolo
+        widget.vinyl?.year     = vinyl.year; // Aggiorna anno     
+        widget.vinyl?.genre    = vinyl.genre; // Aggiorna genere
+        widget.vinyl?.label    = vinyl.label; // Aggiorna etichetta     
+        widget.vinyl?.condition = vinyl.condition; // Aggiorna condizione
+        widget.vinyl?.isFavorite = vinyl.isFavorite; // Aggiorna preferito    
+        widget.vinyl?.imagePath = vinyl.imagePath; // Aggiorna immagine
+        widget.vinyl?.notes    = vinyl.notes; // Aggiorna note
+       widget.vinyl?.dateAdded = vinyl.dateAdded; // Aggiorna data aggiunta 
+         // NOTA: Non è necessario aggiornare l'ID, viene mantenuto quello esistente  
       }
       
       if (success) {

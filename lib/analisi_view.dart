@@ -114,7 +114,7 @@ class Analisi extends StatelessWidget {
                 SizedBox(
                    width: 700,
                   height: 500,
-                  child: Ultime5Vinili(),
+                  child: ViniliPiuVecchi(),
                 )
               ],
             ),
@@ -127,13 +127,13 @@ class Analisi extends StatelessWidget {
 
 
 
-class Ultime5Vinili extends StatelessWidget {
-  const Ultime5Vinili({super.key});
+class ViniliPiuVecchi extends StatelessWidget {
+  const ViniliPiuVecchi({super.key});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Vinyl>>(
-      future: DatabaseService().getRecentVinyls(limit:5),
+      future: DatabaseService().getOldestVinyls(limit:5),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator( color: Colors.blue,));
@@ -144,7 +144,7 @@ class Ultime5Vinili extends StatelessWidget {
 
         final List<dynamic> vinili = snapshot.data!;
         return buildSection(
-          'Ultimi 5 Vinili Aggiunti',
+          'I 5 Vinili più Vecchi',
           'Nessun vinile aggiunto di recente',
           'Aggiungi un vinile per vederlo qui',
           Icons.album,
