@@ -170,6 +170,22 @@ class _ViewDiscoState extends State<ViewDisco> {
                         // REFRESH: Ricarica dati se vinile aggiunto con successo
                         if (result == true && mounted) {
                           // Il provider si aggiorna automaticamente tramite notifyListeners
+                          final provider = Provider.of<VinylProvider>(context, listen: false);
+                          final updatedVinyl = await provider.getVinylById(widget.vinile.id!);
+                          if (updatedVinyl != null) {
+                            setState(() {
+                              widget.vinile.title = updatedVinyl.title;
+                              widget.vinile.artist = updatedVinyl.artist;
+                              widget.vinile.year = updatedVinyl.year;
+                              widget.vinile.genre = updatedVinyl.genre;
+                              widget.vinile.label = updatedVinyl.label;
+                              widget.vinile.condition = updatedVinyl.condition;
+                              widget.vinile.isFavorite = updatedVinyl.isFavorite;
+                              widget.vinile.imagePath = updatedVinyl.imagePath;
+                              widget.vinile.dateAdded = updatedVinyl.dateAdded;
+                              widget.vinile.notes = updatedVinyl.notes;
+                            });
+                          }
                           scaffoldMessenger.showSnackBar(
                             SnackBar(
                               content: Text('Vinile modificato con successo!'),
