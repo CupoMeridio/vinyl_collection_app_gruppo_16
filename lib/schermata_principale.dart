@@ -94,7 +94,7 @@ class _SchermataPState extends State<SchermataP> {
         home: Scaffold(
           body: IndexedStack(
             index: realIndex,
-            children: const [HomeView(), SearchView(), AnalisiView()],
+            children: [HomeView(), SearchView(), AnalisiView(key: UniqueKey())],
           ),
               bottomNavigationBar: NavigationBar(
                 selectedIndex: realIndex,

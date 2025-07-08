@@ -49,26 +49,9 @@ class Analisi extends StatelessWidget {
   };
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scrollBehavior: MaterialScrollBehavior(),
-      title: 'Analisi Vinile',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppConstants.primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      home: Scaffold(
+    return Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context); // Navigate back to the previous screen
-            },
-          ),
-          title: Text('Analisi Vinile'),
+        title: Text('Analisi Vinile'),
         ),
         body:SingleChildScrollView(
         child:Padding(
@@ -137,8 +120,7 @@ class Analisi extends StatelessWidget {
           ),
         ),
       ),
-      ),
-    );
+      );
   }
 }
 
