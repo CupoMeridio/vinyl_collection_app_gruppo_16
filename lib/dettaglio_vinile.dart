@@ -3,6 +3,8 @@ import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'models/song_.dart';
 import 'models/vinyl.dart';
 import 'dart:io';
+import '../services/vinyl_provider.dart';
+import 'package:provider/provider.dart';
 
 class ViewDisco extends StatelessWidget {
   final Vinyl vinile;
@@ -140,7 +142,70 @@ class ViewDisco extends StatelessWidget {
                   
               ]
             )
-          )
+          ),
+
+              const SizedBox(height: 40),
+              Padding(padding: EdgeInsets.symmetric(horizontal: 50),
+              child: 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        
+                      },
+                      child: Text("Modifica", style: TextStyle(
+                              fontSize: 20,
+                              color: AppConstants.primaryColor)
+                              )
+                    ),
+
+                    Divider(),
+
+                    GestureDetector(
+                      onTap: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context, 
+                          builder: (context) => AlertDialog(
+                            title: Text("Conferma eliminazione"),
+                            content: Text("Sei sicuro di voler eliminare questo vinile?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: Text('Annulla'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: Text('Elimina', style: TextStyle(color: Colors.red)),
+                              ),
+                            ]
+                          )
+                        );
+                        if (confirm == true) {
+                            // logica di eliminazione
+                            final provider = Provider.of<VinylProvider>(context, listen: false);
+                            final success = await provider.deleteVinyl(vinile.id!);
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Vinile eliminato!'))
+                              );
+                              Navigator.of(context).pop(); // Torna indietro dopo l'eliminazione
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Errore durante l\'eliminazione'))
+                              );
+                              }
+                        }
+                      },
+                      child: Text("Elimina", style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.red)
+                            ) 
+                    )
+                    ,
+                  ],
+              ),
+            ),      
         ],
       ),
     );
