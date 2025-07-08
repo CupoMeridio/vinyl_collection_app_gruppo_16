@@ -16,6 +16,11 @@ class ViewDisco extends StatelessWidget {
         mainAxisSize:
             MainAxisSize.min, // Ensure column only takes necessary space
         children: [
+          Text(
+            vinile.title, // Use actual data from vinile
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 4.0),
           SizedBox(
             width: 200,
             height: 200,
@@ -30,37 +35,112 @@ class ViewDisco extends StatelessWidget {
                                   ), // Cover the box while maintaining aspect ratio
             ),
 
-          Text(
-            vinile.title, // Use actual data from vinile
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 4.0),
-          Text(
-            vinile.artist, // Use actual data from vinile
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 4.0),
-          Text(
-            'Anno: ${vinile.year}'),
-          const SizedBox(height: 4.0),
-          Text(
-            'Genere: ${vinile.genre}'),
-          const SizedBox(height: 4.0),
-          Text(
-            'Casa Discografica: ${vinile.label}'),
-          const SizedBox(height: 4.0),
-          if(vinile.notes != null && vinile.notes!.isNotEmpty)
-          ...[
-          Text(
-            'Note Personali: ${vinile.notes}'),
-          const SizedBox(height: 4.0)
-          ],
-          Text(
-            'Condizioni: ${vinile.condition}'),
-          const SizedBox(height: 4.0),
-          Text(
-            'Data di aggiunta: ${vinile.dateAdded.toLocal().toString().split(' ')[0]}'), // Format date to show only the date part
-          const SizedBox(height: 4.0)
+          
+          const SizedBox(height: 15),
+          Container(
+            decoration: BoxDecoration(
+              color: AppConstants.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row( 
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Titolo: "),
+                    Text(vinile.title, 
+                    style: Theme.of(context).textTheme.headlineSmall
+                    )
+                  ] 
+                ),
+                Divider(), // inizio nuovo elemento 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Artista: "),
+                    Text(vinile.artist, 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ), // fine elemento
+                Divider(), // linea divisoria
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Anno: "),
+                    Text(vinile.year.toString(), 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ), // fine elemento
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Genere: "),
+                    Text(vinile.genre, 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ), // fine elemento
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Casa Discografica: "),
+                    Text(vinile.label, 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ), // fine elemento
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Artista: "),
+                    Text(vinile.artist, 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ), // fine elemento
+                Divider(),
+                if (vinile.notes != null && vinile.notes!.isNotEmpty)
+                  ...[ Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Note Personali: "),
+                      Text(vinile.notes!, 
+                      style: Theme.of(context).textTheme.bodyMedium
+                      )
+                    ] 
+                  ), 
+                Divider(),
+                  ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Condizioni: "),
+                    Text(vinile.condition, 
+                    style: Theme.of(context).textTheme.bodyMedium
+                    )
+                  ] 
+                ),
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Data Di Aggiunta: "),
+                      Text(vinile.dateAdded.toLocal().toString().split(' ')[0], 
+                      style: Theme.of(context).textTheme.bodyMedium
+                      )
+                    ] 
+                  ),// fine elemento
+                  
+              ]
+            )
+          )
         ],
       ),
     );
@@ -93,9 +173,7 @@ class SchermataDettaglio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Dettaglio Vinile',
-      home: Scaffold(
+    return  Scaffold(
         appBar: AppBar(
           leading: IconButton( 
             icon: Icon(Icons.arrow_back),
@@ -128,7 +206,6 @@ class SchermataDettaglio extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

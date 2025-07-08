@@ -79,6 +79,7 @@ class Analisi extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            color: AppConstants.primaryColor
                           ),
                         ),
                         ...AppConstants.defaultGenres.map((genere) => ListTile(
@@ -91,11 +92,12 @@ class Analisi extends StatelessWidget {
                     ),
                   ],
                 ),
-               Padding(padding: EdgeInsets.all(30),
+               Padding(padding: EdgeInsets.only(left: 15, top: 20),
                child: Text("Andamento crescita della collezione",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: AppConstants.primaryColor
                 )),
                ),
                 DropDownMenu(),
