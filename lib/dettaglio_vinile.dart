@@ -5,6 +5,7 @@ import 'models/vinyl.dart';
 import 'dart:io';
 import '../services/vinyl_provider.dart';
 import 'package:provider/provider.dart';
+import '../screens/add_edit_vinyl_screen.dart';
 
 class ViewDisco extends StatelessWidget {
   final Vinyl vinile;
@@ -151,10 +152,28 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddEditVinylScreen(vinyl: vinile),
+                          ),
+                        );
                         
+                        // REFRESH: Ricarica dati se vinile aggiunto con successo
+                        if (result == true) {
+                          // Il provider si aggiorna automaticamente tramite notifyListeners
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Vinile modificato con successo!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+
                       },
-                      child: Text("Modifica", style: TextStyle(
+                        child: Text("Modifica", style: TextStyle(
                               fontSize: 20,
                               color: AppConstants.primaryColor)
                               )
