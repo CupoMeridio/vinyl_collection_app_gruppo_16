@@ -281,7 +281,7 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
                 height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: AppConstants.primaryColor.withOpacity(0.1),
+                  color: AppConstants.primaryColor.withValues(alpha: 26),
                 ),
                 child: vinyl.imagePath != null
                     ? ClipRRect(
@@ -366,10 +366,10 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getConditionColor(vinyl.condition).withOpacity(0.1),
+                            color: _getConditionColor(vinyl.condition).withValues(alpha: 26),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _getConditionColor(vinyl.condition).withOpacity(0.3),
+                              color: _getConditionColor(vinyl.condition).withValues(alpha: 77),
                             ),
                           ),
                           child: Text(
@@ -404,7 +404,7 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
     return Center(
       child: Icon(
         Icons.album,
-        color: AppConstants.primaryColor.withOpacity(0.5),
+        color: AppConstants.primaryColor.withValues(alpha: 128),
         size: 32,
       ),
     );

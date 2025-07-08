@@ -246,7 +246,7 @@ class _HomeViewState extends State<HomeView> {
             SizedBox(height: AppConstants.spacingMedium),
             
             if (topGenres.isEmpty)
-              Container(
+              SizedBox(
                 height: 120,
                 child: Center(
                   child: Column(
@@ -336,7 +336,7 @@ class _HomeViewState extends State<HomeView> {
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 26),
               blurRadius: 4,
               offset: Offset(0, 2),
             ),
@@ -350,7 +350,7 @@ class _HomeViewState extends State<HomeView> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 51),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(

@@ -281,18 +281,22 @@ Widget buildSection(String title, String missingPhrase, String missingSubtitle, 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                buildSectionHeader(title, mainIcon),
+                Expanded(
+                  child: buildSectionHeader(title, mainIcon),
+                ),
                 if (navigation != null)
-                  TextButton.icon(
-                    onPressed: () {
-                      if (navigation is String) {
-                        Navigator.pushNamed(context, navigation);
-                      } else if (navigation is Function) {
-                        navigation();
-                      }
-                    },
-                    icon: Icon(Icons.arrow_forward),
-                    label: Text('Vedi tutti'),
+                  Flexible(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        if (navigation is String) {
+                          Navigator.pushNamed(context, navigation);
+                        } else if (navigation is Function) {
+                          navigation();
+                        }
+                      },
+                      icon: Icon(Icons.arrow_forward),
+                      label: Text('Vedi tutti'),
+                    ),
                   ),
                     ],
                   ),

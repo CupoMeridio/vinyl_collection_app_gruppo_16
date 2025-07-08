@@ -228,7 +228,7 @@ class _SearchViewState extends State<SearchView> {
   Widget _buildFiltersSection() {
     return Consumer<VinylProvider>(
       builder: (context, provider, child) {
-        final genres = ['Tutti', ...provider.genreDistribution.keys.toList()];
+        final genres = ['Tutti', ...provider.genreDistribution.keys];
         final years = provider.vinyls.map((v) => v.year).toSet().toList()..sort((a, b) => b.compareTo(a));
         
         return Container(

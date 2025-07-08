@@ -76,9 +76,10 @@ class _CategorieViewState extends State<CategorieView> {
               onPressed: () async {
                 final categoryName = _newCategoryController.text.trim();
                 if (categoryName.isNotEmpty) {
+                  final navigator = Navigator.of(context);
                   await _addNewCategory(categoryName);
                   if (mounted) {
-                    Navigator.of(context).pop();
+                    navigator.pop();
                     _newCategoryController.clear();
                   }
                 }
@@ -120,6 +121,7 @@ class _CategorieViewState extends State<CategorieView> {
   }
 
   void _navigateToGenreVinyls(String genre) {
+    if (!mounted) return;
     Navigator.pushNamed(
       context,
       '/GenreVinyls',
@@ -243,7 +245,7 @@ class _CategorieViewState extends State<CategorieView> {
           elevation: 2,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 51), // 0.2 * 255 = 51
               child: Icon(
                 Icons.music_note,
                 color: color,
@@ -272,10 +274,10 @@ class _CategorieViewState extends State<CategorieView> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 26), // 0.1 * 255 = 26
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: color.withOpacity(0.3),
+                            color: color.withValues(alpha: 77), // 0.3 * 255 = 77
                           ),
                         ),
                         child: Text(

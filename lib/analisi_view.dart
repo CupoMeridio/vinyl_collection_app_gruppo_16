@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';

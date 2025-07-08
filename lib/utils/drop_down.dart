@@ -20,7 +20,7 @@ class ChangeNotifierDropDown extends ChangeNotifier {
 }
 
 class DropDownMenu extends StatefulWidget {
-  const DropDownMenu({Key? key}) : super(key: key);
+  const DropDownMenu({super.key});
 
   @override
   State<DropDownMenu> createState() => _DropDownState();

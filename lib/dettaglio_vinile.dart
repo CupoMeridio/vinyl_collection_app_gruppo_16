@@ -7,10 +7,15 @@ import '../services/vinyl_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/add_edit_vinyl_screen.dart';
 
-class ViewDisco extends StatelessWidget {
+class ViewDisco extends StatefulWidget {
   final Vinyl vinile;
   const ViewDisco({super.key, required this.vinile});
 
+  @override
+  State<ViewDisco> createState() => _ViewDiscoState();
+}
+
+class _ViewDiscoState extends State<ViewDisco> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -20,16 +25,16 @@ class ViewDisco extends StatelessWidget {
             MainAxisSize.min, // Ensure column only takes necessary space
         children: [
           Text(
-            vinile.title, // Use actual data from vinile
+            widget.vinile.title, // Use actual data from vinile
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 4.0),
           SizedBox(
             width: 200,
             height: 200,
-            child: vinile.imagePath != null
+            child: widget.vinile.imagePath != null
                                 ? Image.file(
-                                    File(vinile.imagePath!),
+                                    File(widget.vinile.imagePath!),
                                     fit: BoxFit.cover,
                                   )
                                 : Container(
@@ -53,7 +58,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Titolo: "),
-                    Text(vinile.title, 
+                    Text(widget.vinile.title, 
                     style: Theme.of(context).textTheme.headlineSmall
                     )
                   ] 
@@ -63,7 +68,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Artista: "),
-                    Text(vinile.artist, 
+                    Text(widget.vinile.artist, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -73,7 +78,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Anno: "),
-                    Text(vinile.year.toString(), 
+                    Text(widget.vinile.year.toString(), 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -83,7 +88,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Genere: "),
-                    Text(vinile.genre, 
+                    Text(widget.vinile.genre, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -93,7 +98,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Casa Discografica: "),
-                    Text(vinile.label, 
+                    Text(widget.vinile.label, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -103,18 +108,18 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Artista: "),
-                    Text(vinile.artist, 
+                    Text(widget.vinile.artist, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
                 ), // fine elemento
                 Divider(),
-                if (vinile.notes != null && vinile.notes!.isNotEmpty)
+                if (widget.vinile.notes != null && widget.vinile.notes!.isNotEmpty)
                   ...[ Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Note Personali: "),
-                      Text(vinile.notes!, 
+                      Text(widget.vinile.notes!, 
                       style: Theme.of(context).textTheme.bodyMedium
                       )
                     ] 
@@ -125,7 +130,7 @@ class ViewDisco extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Condizioni: "),
-                    Text(vinile.condition, 
+                    Text(widget.vinile.condition, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -135,7 +140,7 @@ class ViewDisco extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Data Di Aggiunta: "),
-                      Text(vinile.dateAdded.toLocal().toString().split(' ')[0], 
+                      Text(widget.vinile.dateAdded.toLocal().toString().split(' ')[0], 
                       style: Theme.of(context).textTheme.bodyMedium
                       )
                     ] 
@@ -153,16 +158,17 @@ class ViewDisco extends StatelessWidget {
                   children: [
                     GestureDetector(
                       onTap: () async {
+                        if (!mounted) return;
                         final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        final result = await Navigator.push(
-                          context,
+                        final navigator = Navigator.of(context);
+                        final result = await navigator.push(
                           MaterialPageRoute(
-                            builder: (context) => AddEditVinylScreen(vinyl: vinile),
+                            builder: (context) => AddEditVinylScreen(vinyl: widget.vinile),
                           ),
                         );
                         
                         // REFRESH: Ricarica dati se vinile aggiunto con successo
-                        if (result == true) {
+                        if (result == true && mounted) {
                           // Il provider si aggiorna automaticamente tramite notifyListeners
                           scaffoldMessenger.showSnackBar(
                             SnackBar(
@@ -183,6 +189,12 @@ class ViewDisco extends StatelessWidget {
 
                     GestureDetector(
                       onTap: () async {
+                        if (!mounted) return;
+                        // Salva i riferimenti al context prima delle operazioni async
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
+                        
                         final confirm = await showDialog<bool>(
                           context: context, 
                           builder: (context) => AlertDialog(
@@ -200,20 +212,19 @@ class ViewDisco extends StatelessWidget {
                             ]
                           )
                         );
-                        if (confirm == true) {
+                        if (confirm == true && mounted) {
                             // logica di eliminazione
-                            final provider = Provider.of<VinylProvider>(context, listen: false);
-                            final success = await provider.deleteVinyl(vinile.id!);
-                            if (success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                            final success = await provider.deleteVinyl(widget.vinile.id!);
+                            if (success && mounted) {
+                              scaffoldMessenger.showSnackBar(
                                 SnackBar(content: Text('Vinile eliminato!'))
                               );
-                              Navigator.of(context).pop(); // Torna indietro dopo l'eliminazione
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              navigator.pop(); // Torna indietro dopo l'eliminazione
+                            } else if (mounted) {
+                              scaffoldMessenger.showSnackBar(
                                 SnackBar(content: Text('Errore durante l\'eliminazione'))
                               );
-                              }
+                            }
                         }
                       },
                       child: Text("Elimina", style: TextStyle(
