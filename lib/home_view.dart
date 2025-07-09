@@ -34,7 +34,7 @@ class _HomeViewState extends State<HomeView> {
                   child: Column(
                     children: [
                       // === RECENT VINYLS: Vinili recenti ===
-                      buildSection("Aggiunti di Recente",
+                      buildSection("Vinili Recenti",
                       "Nessun vinile aggiunto", 
                       "Inizia aggiungendo il tuo primo vinile alla collezione!", 
                       Icons.schedule, 

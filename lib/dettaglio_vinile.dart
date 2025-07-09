@@ -296,26 +296,29 @@ class SchermataDettaglio extends StatelessWidget {
           foregroundColor: Colors.white,
           backgroundColor: AppConstants.primaryColor,
         ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            ViewDisco(vinile: vinile),
-            Expanded(
-              // Expanded ensures ListView.builder gets a bounded height
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final ListItem item = items[index];
-
-                  return ListTile(
-                    leading: Icon(Icons.music_note),
-                    title: item.buildTopPart(context),
-                    subtitle: item.buildBottomPart(context),
-                  );
-                },
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              ViewDisco(vinile: vinile),
+              Container(
+                height: 400, // Adjust this height as needed
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(), // Disable inner scrolling
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final ListItem item = items[index];
+                    return ListTile(
+                      leading: Icon(Icons.music_note),
+                      title: item.buildTopPart(context),
+                      subtitle: item.buildBottomPart(context),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
   }
