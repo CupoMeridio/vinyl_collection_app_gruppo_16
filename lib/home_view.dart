@@ -15,7 +15,17 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
+
 class _HomeViewState extends State<HomeView> {
+  @override
+  void initState() {
+    super.initState();
+    // Inizializza il provider all'avvio della schermata
+    Future.microtask(() {
+      Provider.of<VinylProvider>(context, listen: false).initialize();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,6 +60,7 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         );
                       }, 
+                      //provider.recentVinyls,
                       (Provider.of<VinylProvider>(context).recentVinyls), 
                       context),
                       SizedBox(height: AppConstants.spacingLarge),
@@ -72,6 +83,7 @@ class _HomeViewState extends State<HomeView> {
                             ),
                           );
                         },
+                        //provider.favoriteVinyls,
                         Provider.of<VinylProvider>(context).favoriteVinyls,
                         context,
                       ),
@@ -95,6 +107,7 @@ class _HomeViewState extends State<HomeView> {
                             ),
                           );
                         },
+                        //provider.randomVinyls,
                         Provider.of<VinylProvider>(context).randomVinyls,
                         context,
                       ),
