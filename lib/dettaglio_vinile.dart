@@ -16,6 +16,27 @@ class ViewDisco extends StatefulWidget {
 }
 
 class _ViewDiscoState extends State<ViewDisco> {
+  late Vinyl currentVinyl;
+
+  @override
+  void initState() {
+    super.initState();
+    currentVinyl = widget.vinile;
+  }
+
+  Future<void> _refreshVinyl() async {
+    final provider = Provider.of<VinylProvider>(context, listen: false);
+    // Ricarica tutti i vinili per aggiornare la cache
+    await provider.loadVinyls();
+    // Cerca il vinile aggiornato nella cache
+    final updatedVinyl = provider.getVinylById(widget.vinile.id!);
+    if (updatedVinyl != null && mounted) {
+      setState(() {
+        currentVinyl = updatedVinyl;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -25,16 +46,16 @@ class _ViewDiscoState extends State<ViewDisco> {
             MainAxisSize.min, // Ensure column only takes necessary space
         children: [
           Text(
-            widget.vinile.title, // Use actual data from vinile
+            currentVinyl.title, // Use actual data from vinile
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 4.0),
           SizedBox(
             width: 200,
             height: 200,
-            child: widget.vinile.imagePath != null
+            child: currentVinyl.imagePath != null
                                 ? Image.file(
-                                    File(widget.vinile.imagePath!),
+                                    File(currentVinyl.imagePath!),
                                     fit: BoxFit.cover,
                                   )
                                 : Container(
@@ -58,7 +79,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Titolo: "),
-                    Text(widget.vinile.title, 
+                    Text(currentVinyl.title, 
                     style: Theme.of(context).textTheme.headlineSmall
                     )
                   ] 
@@ -68,7 +89,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Artista: "),
-                    Text(widget.vinile.artist, 
+                    Text(currentVinyl.artist, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -78,7 +99,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Anno: "),
-                    Text(widget.vinile.year.toString(), 
+                    Text(currentVinyl.year.toString(), 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -88,7 +109,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Genere: "),
-                    Text(widget.vinile.genre, 
+                    Text(currentVinyl.genre, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -98,28 +119,18 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Casa Discografica: "),
-                    Text(widget.vinile.label, 
+                    Text(currentVinyl.label, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
                 ), // fine elemento
                 Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Artista: "),
-                    Text(widget.vinile.artist, 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ), // fine elemento
-                Divider(),
-                if (widget.vinile.notes != null && widget.vinile.notes!.isNotEmpty)
+                if (currentVinyl.notes != null && currentVinyl.notes!.isNotEmpty)
                   ...[ Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Note Personali: "),
-                      Text(widget.vinile.notes!, 
+                      Text(currentVinyl.notes!, 
                       style: Theme.of(context).textTheme.bodyMedium
                       )
                     ] 
@@ -130,7 +141,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Condizioni: "),
-                    Text(widget.vinile.condition, 
+                    Text(currentVinyl.condition, 
                     style: Theme.of(context).textTheme.bodyMedium
                     )
                   ] 
@@ -140,7 +151,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Data Di Aggiunta: "),
-                      Text(widget.vinile.dateAdded.toLocal().toString().split(' ')[0], 
+                      Text(currentVinyl.dateAdded.toLocal().toString().split(' ')[0], 
                       style: Theme.of(context).textTheme.bodyMedium
                       )
                     ] 
@@ -158,34 +169,18 @@ class _ViewDiscoState extends State<ViewDisco> {
                   children: [
                     GestureDetector(
                       onTap: () async {
-                        if (!mounted) return;
                         final scaffoldMessenger = ScaffoldMessenger.of(context);
                         final navigator = Navigator.of(context);
                         final result = await navigator.push(
                           MaterialPageRoute(
-                            builder: (context) => AddEditVinylScreen(vinyl: widget.vinile),
+                            builder: (context) => AddEditVinylScreen(
+                              vinyl: currentVinyl,
+                            ),
                           ),
                         );
-                        
-                        // REFRESH: Ricarica dati se vinile aggiunto con successo
+                        // REFRESH: Ricarica dati se vinile modificato con successo
                         if (result == true && mounted) {
-                          // Il provider si aggiorna automaticamente tramite notifyListeners
-                          final provider = Provider.of<VinylProvider>(context, listen: false);
-                          final updatedVinyl = await provider.getVinylById(widget.vinile.id!);
-                          if (updatedVinyl != null) {
-                            setState(() {
-                              widget.vinile.title = updatedVinyl.title;
-                              widget.vinile.artist = updatedVinyl.artist;
-                              widget.vinile.year = updatedVinyl.year;
-                              widget.vinile.genre = updatedVinyl.genre;
-                              widget.vinile.label = updatedVinyl.label;
-                              widget.vinile.condition = updatedVinyl.condition;
-                              widget.vinile.isFavorite = updatedVinyl.isFavorite;
-                              widget.vinile.imagePath = updatedVinyl.imagePath;
-                              widget.vinile.dateAdded = updatedVinyl.dateAdded;
-                              widget.vinile.notes = updatedVinyl.notes;
-                            });
-                          }
+                          await _refreshVinyl();
                           scaffoldMessenger.showSnackBar(
                             SnackBar(
                               content: Text('Vinile modificato con successo!'),
@@ -230,7 +225,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                         );
                         if (confirm == true && mounted) {
                             // logica di eliminazione
-                            final success = await provider.deleteVinyl(widget.vinile.id!);
+                            final success = await provider.deleteVinyl(currentVinyl.id!);
                             if (success && mounted) {
                               scaffoldMessenger.showSnackBar(
                                 SnackBar(content: Text('Vinile eliminato!'))
