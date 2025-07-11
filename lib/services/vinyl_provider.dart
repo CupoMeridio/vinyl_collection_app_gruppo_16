@@ -412,6 +412,7 @@ class VinylProvider with ChangeNotifier {
      int? year,
      bool? favoritesOnly,
      String sortBy = 'title',
+     String? condition,
    }) {
      // Aggiorna stato filtri se forniti
      if (genre != null) _selectedGenre = genre;
