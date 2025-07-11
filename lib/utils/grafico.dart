@@ -1,7 +1,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';
 import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
 
@@ -32,7 +31,7 @@ class GraficoATorta extends StatelessWidget {
 
         final Map<String, int> generiDistribution = snapshot.data![0] as Map<String, int>;
         final int totaleVinili = snapshot.data![1] as int;
-        final List<String> generi = AppConstants.defaultGenres;
+        final List<String> generi = generiDistribution.keys.toList();
         List<DatiGrafico> dati = [];
 
         for (var genere in generi) {

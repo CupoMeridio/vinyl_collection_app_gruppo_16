@@ -45,7 +45,7 @@ class AppConstants {
   // Nome del file database SQLite
   static const String databaseName = 'vinyl_collection.db';
   // Versione del database per gestire migrazioni future
-  static const int databaseVersion = 1;
+  static const int databaseVersion = 2;
   
   // === TABELLE DEL DATABASE ===
   // Nome della tabella principale che contiene i dati dei vinili

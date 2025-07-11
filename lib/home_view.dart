@@ -3,9 +3,8 @@ import 'package:provider/provider.dart';
 
 // Import dei servizi e schermate necessari
 import 'services/vinyl_provider.dart';
-import 'screens/add_edit_vinyl_screen.dart';
 import 'utils/constants.dart';
-import "../models/section.dart";
+import "models/section.dart";
 import 'search_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -30,130 +29,117 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(AppConstants.defaultPadding),
-          child: Column(
-            children: [
-              // === HEADER: Intestazione app ===
-              buildHeader(),
-              SizedBox(height: AppConstants.spacingLarge),
-              
-              // === CONTENT: Contenuto principale scrollabile ===
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // === RECENT VINYLS: Vinili recenti ===
-                      buildSection("Vinili Recenti",
-                      "Nessun vinile aggiunto", 
-                      "Inizia aggiungendo il tuo primo vinile alla collezione!", 
-                      Icons.schedule, 
-                      Icons.album, 
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.all(AppConstants.defaultPadding),
+        child: Column(
+          children: [
+            // === HEADER: Intestazione app ===
+            buildHeader(),
+            SizedBox(height: AppConstants.spacingLarge),
+            
+            // === CONTENT: Contenuto principale scrollabile ===
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                    // === RECENT VINYLS: Vinili recenti ===
+                    buildSection("Vinili Recenti",
+                    "Nessun vinile aggiunto", 
+                    "Inizia aggiungendo il tuo primo vinile alla collezione!", 
+                    Icons.schedule, 
+                    Icons.album, 
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SearchView(
+                            sortBy: 'recent',
+                            title: 'Vinili Recenti',
+                          ),
+                        ),
+                      );
+                    }, 
+                    //provider.recentVinyls,
+                    (Provider.of<VinylProvider>(context).recentVinyls), 
+                    context),
+                    SizedBox(height: AppConstants.spacingLarge),
+                    
+                    // === FAVORITE VINYLS: Vinili preferiti ===
+                    buildSection(
+                      "I Tuoi Preferiti",
+                      "Nessun preferito",
+                      "Marca i tuoi vinili preferiti per vederli qui!",
+                      Icons.favorite,
+                      Icons.favorite_border,
                       () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => SearchView(
-                              sortBy: 'recent',
-                              title: 'Vinili Recenti',
+                              showFavoritesOnly: true,
+                              title: 'I Tuoi Preferiti',
                             ),
                           ),
                         );
-                      }, 
-                      //provider.recentVinyls,
-                      (Provider.of<VinylProvider>(context).recentVinyls), 
-                      context),
-                      SizedBox(height: AppConstants.spacingLarge),
-                      
-                      // === FAVORITE VINYLS: Vinili preferiti ===
-                      buildSection(
-                        "I Tuoi Preferiti",
-                        "Nessun preferito",
-                        "Marca i tuoi vinili preferiti per vederli qui!",
-                        Icons.favorite,
-                        Icons.favorite_border,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SearchView(
-                                showFavoritesOnly: true,
-                                title: 'I Tuoi Preferiti',
-                              ),
+                      },
+                      //provider.favoriteVinyls,
+                      Provider.of<VinylProvider>(context).favoriteVinyls,
+                      context,
+                    ),
+                    SizedBox(height: AppConstants.spacingLarge),
+                    
+                    // === RANDOM VINYLS: Vinili casuali consigliati ===
+                    buildSection(
+                      "Vinili Consigliati",
+                      "Nessun vinile consigliato",
+                      "Aggiungi vinili alla tua collezione per ricevere consigli!",
+                      Icons.recommend,
+                      Icons.recommend,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SearchView(
+                              sortBy: 'random',
+                              title: 'Vinili Consigliati',
                             ),
-                          );
-                        },
-                        //provider.favoriteVinyls,
-                        Provider.of<VinylProvider>(context).favoriteVinyls,
-                        context,
-                      ),
-                      SizedBox(height: AppConstants.spacingLarge),
-                      
-                      // === RANDOM VINYLS: Vinili casuali consigliati ===
-                      buildSection(
-                        "Vinili Consigliati",
-                        "Nessun vinile consigliato",
-                        "Aggiungi vinili alla tua collezione per ricevere consigli!",
-                        Icons.recommend,
-                        Icons.recommend,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SearchView(
-                                sortBy: 'random',
-                                title: 'Vinili Consigliati',
-                              ),
-                            ),
-                          );
-                        },
-                        //provider.randomVinyls,
-                        Provider.of<VinylProvider>(context).randomVinyls,
-                        context,
-                      ),
-                      SizedBox(height: AppConstants.spacingLarge),
+                          ),
+                        );
+                      },
+                      //provider.randomVinyls,
+                      Provider.of<VinylProvider>(context).randomVinyls,
+                      context,
+                    ),
+                    SizedBox(height: AppConstants.spacingLarge),
 
-                      // === STATS: Statistiche rapide ===
-                      _buildQuickStatsSection(context),
-                      SizedBox(height: AppConstants.spacingLarge),
-                      
-                      // === CATEGORIES: Accesso rapido alle categorie ===
-                      _buildCategoriesSection(context),
-                    ],
-                  ),
-                ),
+                    // === STATS: Statistiche rapide ===
+                    _buildQuickStatsSection(context),
+                    SizedBox(height: AppConstants.spacingLarge),
+                    
+                    // === CATEGORIES: Accesso rapido alle categorie ===
+                    _buildCategoriesSection(context),
+                    
+                    // === BOTTOM PADDING: Spazio extra per la navigation bar ===
+                    SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // NAVIGATION: Naviga alla schermata aggiunta vinile
-          final scaffoldMessenger = ScaffoldMessenger.of(context);
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddEditVinylScreen(),
             ),
-          );
-          
-          // REFRESH: Ricarica dati se vinile aggiunto con successo
-          if (result == true && mounted) {
-            // Il provider si aggiorna automaticamente tramite notifyListeners
-            scaffoldMessenger.showSnackBar(
-              SnackBar(
-                content: Text('Vinile aggiunto alla collezione!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        },
-        backgroundColor: AppConstants.primaryColor,
-        tooltip: 'Aggiungi nuovo vinile',
-        child: Icon(Icons.add, color: Colors.white),
+          ],
+        ),
       ),
     );
   }
@@ -237,77 +223,52 @@ class _HomeViewState extends State<HomeView> {
         final topGenres = genreDistribution.entries
             .where((entry) => entry.value > 0)
             .toList()
-          ..sort((a, b) => b.value.compareTo(a.value))
-          ..take(4).toList();
+          ..sort((a, b) => b.value.compareTo(a.value));
         
         return Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                buildSectionHeader(
-                  'Categorie Musicali',
-                  Icons.library_music,
+                Expanded(
+                  child: buildSectionHeader(
+                    'Categorie Musicali',
+                    Icons.library_music,
+                  ),
                 ),
-                TextButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/categorie');
-                        },
-                        icon: Icon(Icons.arrow_forward),
-                        label: Text('Vedi tutte'),
-                      ),
+                Flexible(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/categorie');
+                    },
+                    icon: Icon(Icons.arrow_forward),
+                    label: Text('Vedi tutte'),
+                  ),
+                ),
               ],
             ),
             SizedBox(height: AppConstants.spacingMedium),
             
             if (topGenres.isEmpty)
-              SizedBox(
-                height: 120,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.library_music,
-                        color: Colors.grey[400],
-                        size: 48,
-                      ),
-                      SizedBox(height: AppConstants.spacingSmall),
-                      Text(
-                        'Nessuna categoria',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Aggiungi vinili per vedere le categorie',
-                        style: TextStyle(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+              buildEmptyState(
+                'Nessuna categoria',
+                'Aggiungi vinili per vedere le categorie',
+                Icons.library_music,
               )
             else
-              GridView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: AppConstants.spacingMedium,
-                  mainAxisSpacing: AppConstants.spacingMedium,
-                  childAspectRatio: 2.5,
+              SizedBox(
+                height: 140,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  itemCount: topGenres.length,
+                  separatorBuilder: (context, index) => 
+                      SizedBox(width: AppConstants.spacingMedium),
+                  itemBuilder: (context, index) {
+                    final genre = topGenres[index];
+                    return _buildGenreCard(genre.key, genre.value);
+                  },
                 ),
-                itemCount: topGenres.length,
-                itemBuilder: (context, index) {
-                  final genre = topGenres[index];
-                  return _buildGenreCard(genre.key, genre.value);
-                },
               ),
           ],
         );
@@ -346,12 +307,13 @@ class _HomeViewState extends State<HomeView> {
         );
       },
       child: Container(
+        width: 140,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 26),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: Offset(0, 2),
             ),
@@ -359,45 +321,42 @@ class _HomeViewState extends State<HomeView> {
         ),
         child: Padding(
           padding: EdgeInsets.all(AppConstants.paddingMedium),
-          child: Row(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 51),
-                  borderRadius: BorderRadius.circular(20),
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(25),
                 ),
                 child: Icon(
                   Icons.music_note,
                   color: color,
-                  size: 20,
+                  size: 28,
                 ),
               ),
-              SizedBox(width: AppConstants.spacingSmall),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      genre,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      count == 1 ? '$count vinile' : '$count vinili',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: AppConstants.spacingSmall),
+              Text(
+                genre,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 2),
+              Text(
+                count == 1 ? '$count vinile' : '$count vinili',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),

@@ -9,6 +9,7 @@ import 'dart:io';
 // Import dei modelli e servizi necessari
 import '../models/vinyl.dart';
 import '../services/vinyl_provider.dart';
+import '../services/database_service.dart';
 import '../utils/constants.dart';
 
 // === SCHERMATA AGGIUNTA/MODIFICA VINILE ===
@@ -40,9 +41,14 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
   
   // === STATO FORM ===
   // DROPDOWN VALUES: Valori selezionati per dropdown
-  String _selectedGenre = AppConstants.defaultGenres.first;
+  String _selectedGenre = 'Rock'; // Valore di default, verrà aggiornato da _loadAvailableGenres
   String _selectedCondition = AppConstants.vinylConditions.first;
   bool _isFavorite = false;
+  
+  // === GENRE MANAGEMENT ===
+  // Lista completa di generi (predefiniti + personalizzati)
+  List<String> _availableGenres = [];
+  final DatabaseService _databaseService = DatabaseService();
   
   // === IMAGE MANAGEMENT ===
   // PATTERN: File Strategy per gestione immagini
@@ -58,6 +64,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
   void initState() {
     super.initState();
     _initializeControllers();
+    _loadAvailableGenres();
     _loadExistingData();
   }
   
@@ -71,6 +78,35 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     _notesController = TextEditingController();
   }
   
+  // === GENRE LOADING: Caricamento generi disponibili ===
+  Future<void> _loadAvailableGenres() async {
+    try {
+      // Ottieni tutte le categorie dal database (predefinite + personalizzate)
+      final categories = await _databaseService.getAllCategories();
+      
+      // Estrai i nomi delle categorie
+      _availableGenres = categories.map((category) => category.name).toList();
+      
+      setState(() {
+        // Assicurati che il genere selezionato sia nella lista
+        if (!_availableGenres.contains(_selectedGenre)) {
+          if (_availableGenres.isNotEmpty) {
+            _selectedGenre = _availableGenres.first;
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('Errore nel caricamento dei generi: $e');
+      // Fallback a generi di base in caso di errore
+      setState(() {
+        _availableGenres = ['Rock', 'Pop', 'Jazz', 'Blues', 'Classical'];
+        if (!_availableGenres.contains(_selectedGenre)) {
+          _selectedGenre = _availableGenres.first;
+        }
+      });
+    }
+  }
+  
   // === DATA LOADING: Carica dati esistenti per modifica ===
   // CONDITIONAL LOGIC: Popola form solo se in modalità modifica
   void _loadExistingData() {
@@ -81,7 +117,17 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       _yearController.text = vinyl.year.toString();
       _labelController.text = vinyl.label;
       _notesController.text = vinyl.notes ?? '';
-      _selectedGenre = vinyl.genre;
+      
+      // GENRE HANDLING: Gestione genere con controllo disponibilità
+      if (_availableGenres.contains(vinyl.genre)) {
+        _selectedGenre = vinyl.genre;
+      } else {
+        // Se il genere non è nella lista, aggiungilo
+        _availableGenres.add(vinyl.genre);
+        _availableGenres.sort();
+        _selectedGenre = vinyl.genre;
+      }
+      
       _selectedCondition = vinyl.condition;
       _isFavorite = vinyl.isFavorite;
       _existingImagePath = vinyl.imagePath;
@@ -472,6 +518,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
               validator: (value) => _validateRequired(value, 'Titolo'),
               textCapitalization: TextCapitalization.words,
+              autofillHints: [AutofillHints.name],
             ),
             
             SizedBox(height: AppConstants.spacingMedium),
@@ -490,6 +537,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
               validator: (value) => _validateRequired(value, 'Artista'),
               textCapitalization: TextCapitalization.words,
+              autofillHints: [AutofillHints.givenName],
             ),
             
             SizedBox(height: AppConstants.spacingMedium),
@@ -513,6 +561,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                     ),
                     validator: _validateYear,
                     keyboardType: TextInputType.number,
+                    autofillHints: [AutofillHints.birthdayYear],
                   ),
                 ),
                 
@@ -534,6 +583,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                     ),
                     validator: (value) => _validateRequired(value, 'Etichetta'),
                     textCapitalization: TextCapitalization.words,
+                    autofillHints: [AutofillHints.organizationName],
                   ),
                 ),
               ],
@@ -577,7 +627,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                   borderRadius: BorderRadius.circular(AppConstants.borderRadius),
                 ),
               ),
-              items: AppConstants.defaultGenres.map((genre) {
+              items: _availableGenres.map((genre) {
                 return DropdownMenuItem(
                   value: genre,
                   child: Text(genre),
@@ -680,6 +730,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
               maxLines: 4,
               textCapitalization: TextCapitalization.sentences,
+              autofillHints: [AutofillHints.addressCityAndState],
             ),
           ],
         ),

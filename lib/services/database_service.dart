@@ -46,6 +46,41 @@ class DatabaseService {
     _database = await _initDatabase();
     return _database!;
   }
+  
+  // Metodo per gestire le migrazioni del database
+  Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Migrazione dalla versione 1 alla 2: aggiunge il campo isDefault
+      await db.execute('ALTER TABLE ${AppConstants.categoryTable} ADD COLUMN isDefault INTEGER NOT NULL DEFAULT 0');
+      
+      // Marca le categorie predefinite esistenti come default
+      for (String genre in AppConstants.defaultGenres) {
+        await db.execute(
+          'UPDATE ${AppConstants.categoryTable} SET isDefault = 1 WHERE name = ?',
+          [genre]
+        );
+      }
+      
+      // Inserisce eventuali categorie predefinite mancanti
+      for (String genre in AppConstants.defaultGenres) {
+        final existing = await db.query(
+          AppConstants.categoryTable,
+          where: 'name = ?',
+          whereArgs: [genre],
+        );
+        
+        if (existing.isEmpty) {
+          await db.insert(AppConstants.categoryTable, {
+            'name': genre,
+            'description': 'Genere musicale $genre',
+            'vinylCount': 0,
+            'isDefault': 1,
+            'dateCreated': DateTime.now().toIso8601String(),
+          });
+        }
+      }
+    }
+  }
 
   // Metodo privato per inizializzare il database
   // ASYNC: Le operazioni di file system sono asincrone per non bloccare l'UI
@@ -64,10 +99,12 @@ class DatabaseService {
     
     // AWAIT: openDatabase è asincrono perché crea/apre file dal disco
     // onCreate: Callback chiamato solo alla prima creazione del database
+    // onUpgrade: Callback chiamato quando la versione del database aumenta
     return await openDatabase(
       path,
       version: AppConstants.databaseVersion,
       onCreate: _createDatabase, // Funzione per creare la struttura iniziale
+      onUpgrade: _upgradeDatabase, // Funzione per migrazioni del database
     );
   }
 
@@ -103,6 +140,7 @@ class DatabaseService {
         name TEXT NOT NULL UNIQUE,             -- Nome categoria (deve essere unico)
         description TEXT,                       -- Descrizione opzionale
         vinylCount INTEGER NOT NULL DEFAULT 0, -- Contatore vinili nella categoria
+        isDefault INTEGER NOT NULL DEFAULT 0,  -- Flag categoria predefinita (0=false, 1=true)
         dateCreated TEXT NOT NULL              -- Data creazione categoria
       )
     ''');
@@ -133,6 +171,7 @@ class DatabaseService {
         'name': genre,
         'description': 'Genere musicale $genre',
         'vinylCount': 0,
+        'isDefault': 1,  // Marca come categoria predefinita
         // ISO 8601: Standard internazionale per date/orari
         'dateCreated': DateTime.now().toIso8601String(),
       });
@@ -329,17 +368,6 @@ class DatabaseService {
   }
 
   // === OPERAZIONI CRUD PER CATEGORIE ===
-  
-  // Recupera tutte le categorie ordinate alfabeticamente
-  // ASC: Ordine crescente (A-Z)
-  Future<List<models.Category>> getAllCategories() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      AppConstants.categoryTable,
-      orderBy: 'name ASC',     // Ordinamento alfabetico
-    );
-    return List.generate(maps.length, (i) => models.Category.fromMap(maps[i]));
-  }
 
   // === PATTERN ARCHITETTURALE: DUAL COUNTING STRATEGY ===
   // 
@@ -401,28 +429,71 @@ class DatabaseService {
   // utilizzato per verifiche di integrità e report statistici dettagliati
   // GROUP BY: Raggruppa i record per campo specifico
   // COUNT: Conta i record in ogni gruppo
-  // VANTAGGIO: Sempre corretto, auto-aggiornante, impossibile da corrompere
-  // SVANTAGGIO: Più lento per grandi dataset, richiede scansione completa
+  // Ottiene la distribuzione dei generi basata sui conteggi reali dei vinili
+  // e include tutte le categorie dal database (anche quelle senza vinili)
   Future<Map<String, int>> getGenreDistribution() async {
     final db = await database;
-    // RAW QUERY: Query complessa con raggruppamento
-    // GROUP BY: Raggruppa per genere musicale
-    // ORDER BY count DESC: Ordina per frequenza (più popolari prima)
-    // NOTA: Questa query è il "source of truth" per i conteggi
-    final List<Map<String, dynamic>> result = await db.rawQuery(
+    
+    // 1. Ottieni conteggi dai vinili esistenti
+    final List<Map<String, dynamic>> vinylResult = await db.rawQuery(
       'SELECT genre, COUNT(*) as count FROM ${AppConstants.vinylTable} GROUP BY genre ORDER BY count DESC'
     );
     
     // Converte il risultato SQL in Map Dart
     Map<String, int> distribution = {};
-    // FOR LOOP: Itera attraverso ogni riga del risultato
-    // PATTERN: Trasformazione da formato SQL a formato Dart
-    for (var row in result) {
-      // Estrae genere e conteggio da ogni riga
-      // QUESTO È IL CONTEGGIO REALE: calcolato direttamente dai dati
+    for (var row in vinylResult) {
       distribution[row['genre']] = row['count'];
     }
+    
+    // 2. Aggiungi tutte le categorie dal database (predefinite e personalizzate)
+    final List<Map<String, dynamic>> categoryResult = await db.query(
+      AppConstants.categoryTable,
+      columns: ['name']
+    );
+    
+    // Aggiungi categorie con conteggio 0 se non già presenti
+    for (var row in categoryResult) {
+      final categoryName = row['name'] as String;
+      if (!distribution.containsKey(categoryName)) {
+        distribution[categoryName] = 0;
+      }
+    }
+    
     return distribution;
+  }
+  
+  // Recupera tutte le categorie dal database
+  Future<List<models.Category>> getAllCategories() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      AppConstants.categoryTable,
+      orderBy: 'isDefault DESC, name ASC', // Prima le predefinite, poi alfabetico
+    );
+    return List.generate(maps.length, (i) => models.Category.fromMap(maps[i]));
+  }
+  
+  // Recupera solo le categorie predefinite
+  Future<List<models.Category>> getDefaultCategories() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      AppConstants.categoryTable,
+      where: 'isDefault = ?',
+      whereArgs: [1],
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => models.Category.fromMap(maps[i]));
+  }
+  
+  // Recupera solo le categorie personalizzate
+  Future<List<models.Category>> getCustomCategories() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      AppConstants.categoryTable,
+      where: 'isDefault = ?',
+      whereArgs: [0],
+      orderBy: 'name ASC',
+    );
+    return List.generate(maps.length, (i) => models.Category.fromMap(maps[i]));
   }
 
   // Recupera i vinili più vecchi per anno di pubblicazione
@@ -636,7 +707,7 @@ class DatabaseService {
 
   // === OPERAZIONI CRUD AGGIUNTIVE PER CATEGORIE ===
   
-  // Inserisce una nuova categoria
+  // Inserisce una nuova categoria nel database
   Future<int> insertCategory(models.Category category) async {
     final db = await database;
     return await db.insert(AppConstants.categoryTable, category.toMap());

@@ -53,58 +53,80 @@ class Analisi extends StatelessWidget {
         appBar: AppBar(
         title: Text('Analisi Vinile'),
         ),
-        body:SingleChildScrollView(
-        child:Padding(
-          padding: const EdgeInsets.fromLTRB(10, 30, 10, 30),
-          child: Center(
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
             child: Column(
               children: [
-                TotaleVinili(),
+                const TotaleVinili(),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    Padding(padding: const EdgeInsets.all(10), 
-                    child:SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: GraficoATorta(generiColori),
-                    ),),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: GraficoATorta(generiColori),
+                      ),
+                    ),
                     SizedBox(
                       width: 150,
-                      height: 200,
-                    child:ListView(
-                      children: [
-                        const Text(
-                          "Generi Musicali",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppConstants.primaryColor
-                          ),
-                        ),
-                        ...AppConstants.defaultGenres.map((genere) => ListTile(
-                              title: Text(genere),
-                              leading: Icon(Icons.music_note),
-                              iconColor: generiColori[genere] ?? Colors.grey,
-                            )),
-                      ],
-                    ),
+                      height: 180,
+                      child: FutureBuilder<Map<String, int>>(
+                        future: DatabaseService().getGenreDistribution(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState != ConnectionState.done) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return const Center(child: Text('Errore caricamento'));
+                          }
+                          
+                          final generi = snapshot.data!.keys.toList();
+                          return ListView(
+                            children: [
+                              const Text(
+                                "Generi Musicali",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.primaryColor
+                                ),
+                              ),
+                              ...generi.map((genere) => ListTile(
+                                    dense: true,
+                                    title: Text(genere, style: const TextStyle(fontSize: 13)),
+                                    leading: Icon(Icons.music_note, size: 18),
+                                    iconColor: generiColori[genere] ?? Colors.grey,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                  )),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
-               Padding(padding: EdgeInsets.only(left: 15, top: 20),
-               child: Text("Andamento crescita della collezione",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.primaryColor
-                )),
-               ),
-                DropDownMenu(),
-               SizedBox(
-                  width: 700,
-                  height: 500,
+                const SizedBox(height: 16),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Text(
+                    "Andamento crescita della collezione",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.primaryColor
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const DropDownMenu(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 250,
                   child: Consumer<ChangeNotifierDropDown>(
                     builder: (context, notifier, child) {
                       return GraficoALinee(
@@ -112,17 +134,18 @@ class Analisi extends StatelessWidget {
                       );
                     },
                   ),
-                ),  
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
-                   width: 700,
-                  height: 500,
-                  child: ViniliPiuVecchi(),
-                )
+                  width: double.infinity,
+                  height: 250,
+                  child: const ViniliPiuVecchi(),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
-      ),
       );
   }
 }

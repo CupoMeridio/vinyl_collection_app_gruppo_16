@@ -362,22 +362,19 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 10,
+                            vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: _getConditionColor(vinyl.condition).withValues(alpha: 26),
+                            color: _getConditionColor(vinyl.condition),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _getConditionColor(vinyl.condition).withValues(alpha: 77),
-                            ),
                           ),
                           child: Text(
                             vinyl.condition,
-                            style: TextStyle(
-                              color: _getConditionColor(vinyl.condition),
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -413,17 +410,17 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
   Color _getConditionColor(String condition) {
     switch (condition) {
       case 'Nuovo':
-        return Colors.green;
+        return Colors.green[700]!;
       case 'Ottimo':
-        return Colors.lightGreen;
+        return Colors.green[600]!;
       case 'Buono':
-        return Colors.orange;
+        return Colors.orange[700]!;
       case 'Discreto':
-        return Colors.deepOrange;
+        return Colors.deepOrange[700]!;
       case 'Da restaurare':
-        return Colors.red;
+        return Colors.red[700]!;
       default:
-        return Colors.grey;
+        return Colors.grey[700]!;
     }
   }
 }

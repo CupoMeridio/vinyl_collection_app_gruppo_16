@@ -37,135 +37,88 @@ class _ViewDiscoState extends State<ViewDisco> {
     }
   }
 
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "$label:",
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 14),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Column(
-        mainAxisSize:
-            MainAxisSize.min, // Ensure column only takes necessary space
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            currentVinyl.title, // Use actual data from vinile
+            currentVinyl.title,
             style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4.0),
+          const SizedBox(height: 8.0),
           SizedBox(
-            width: 200,
-            height: 200,
+            width: 150,
+            height: 150,
             child: currentVinyl.imagePath != null
-                                ? Image.file(
-                                    File(currentVinyl.imagePath!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
-                                    child: Icon(Icons.album, color: AppConstants.primaryColor.withValues(alpha: 0.5), size: 100),
-                                  ), // Cover the box while maintaining aspect ratio
-            ),
-
-          
-          const SizedBox(height: 15),
+                ? Image.file(
+                    File(currentVinyl.imagePath!),
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                    child: Icon(Icons.album, color: AppConstants.primaryColor.withValues(alpha: 0.5), size: 60),
+                  ),
+          ),
+          const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
               color: AppConstants.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row( 
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Titolo: "),
-                    Text(currentVinyl.title, 
-                    style: Theme.of(context).textTheme.headlineSmall
-                    )
-                  ] 
-                ),
-                Divider(), // inizio nuovo elemento 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Artista: "),
-                    Text(currentVinyl.artist, 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ), // fine elemento
-                Divider(), // linea divisoria
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Anno: "),
-                    Text(currentVinyl.year.toString(), 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ), // fine elemento
-                Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Genere: "),
-                    Text(currentVinyl.genre, 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ), // fine elemento
-                Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Casa Discografica: "),
-                    Text(currentVinyl.label, 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ), // fine elemento
-                Divider(),
-                if (currentVinyl.notes != null && currentVinyl.notes!.isNotEmpty)
-                  ...[ Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Note Personali: "),
-                      Text(currentVinyl.notes!, 
-                      style: Theme.of(context).textTheme.bodyMedium
-                      )
-                    ] 
-                  ), 
-                Divider(),
-                  ],
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Condizioni: "),
-                    Text(currentVinyl.condition, 
-                    style: Theme.of(context).textTheme.bodyMedium
-                    )
-                  ] 
-                ),
-                  Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Data Di Aggiunta: "),
-                      Text(currentVinyl.dateAdded.toLocal().toString().split(' ')[0], 
-                      style: Theme.of(context).textTheme.bodyMedium
-                      )
-                    ] 
-                  ),// fine elemento
-                  
-              ]
-            )
+                _buildInfoRow("Artista", currentVinyl.artist),
+                const SizedBox(height: 8),
+                _buildInfoRow("Anno", currentVinyl.year.toString()),
+                const SizedBox(height: 8),
+                _buildInfoRow("Genere", currentVinyl.genre),
+                const SizedBox(height: 8),
+                _buildInfoRow("Casa Discografica", currentVinyl.label),
+                const SizedBox(height: 8),
+                _buildInfoRow("Condizioni", currentVinyl.condition),
+                const SizedBox(height: 8),
+                _buildInfoRow("Data Aggiunta", currentVinyl.dateAdded.toLocal().toString().split(' ')[0]),
+                if (currentVinyl.notes != null && currentVinyl.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Note", currentVinyl.notes!),
+                ],
+              ],
+            ),
           ),
 
-              const SizedBox(height: 40),
-              Padding(padding: EdgeInsets.symmetric(horizontal: 50),
-              child: 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     GestureDetector(
                       onTap: () async {

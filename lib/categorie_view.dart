@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import 'services/database_service.dart';
 import 'models/category.dart' as models;
 
@@ -13,6 +12,7 @@ class CategorieView extends StatefulWidget {
 class _CategorieViewState extends State<CategorieView> {
   final DatabaseService _databaseService = DatabaseService();
   Map<String, int> _genreDistribution = {};
+  List<models.Category> _allCategories = [];
   bool _isLoading = true;
   final TextEditingController _newCategoryController = TextEditingController();
 
@@ -31,8 +31,10 @@ class _CategorieViewState extends State<CategorieView> {
   Future<void> _loadGenreDistribution() async {
     try {
       final distribution = await _databaseService.getGenreDistribution();
+      final categories = await _databaseService.getAllCategories();
       setState(() {
         _genreDistribution = distribution;
+        _allCategories = categories;
         _isLoading = false;
       });
     } catch (e) {
@@ -120,6 +122,89 @@ class _CategorieViewState extends State<CategorieView> {
     }
   }
 
+  Future<void> _deleteCategory(models.Category category) async {
+    // Verifica che sia una categoria personalizzata
+    if (category.isDefault) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Non è possibile eliminare le categorie predefinite'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Verifica se ci sono vinili associati a questa categoria
+    final vinylCount = _genreDistribution[category.name] ?? 0;
+    if (vinylCount > 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Impossibile eliminare "${category.name}": contiene $vinylCount vinili'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      await _databaseService.deleteCategory(category.id!);
+      
+      // Ricarica la distribuzione per rimuovere la categoria eliminata
+      await _loadGenreDistribution();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Categoria "${category.name}" eliminata con successo'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore nell\'eliminazione della categoria: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showDeleteConfirmationDialog(models.Category category) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Conferma eliminazione'),
+          content: Text('Sei sicuro di voler eliminare la categoria "${category.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteCategory(category);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _navigateToGenreVinyls(String genre) {
     if (!mounted) return;
     Navigator.pushNamed(
@@ -180,65 +265,25 @@ class _CategorieViewState extends State<CategorieView> {
   }
 
   Widget _buildCategoriesList() {
-    if (_genreDistribution.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.library_music,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nessuna categoria trovata',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Aggiungi dei vinili per vedere le categorie',
-              style: TextStyle(
-                color: Colors.grey[500],
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _showAddCategoryDialog,
-              icon: const Icon(Icons.add),
-              label: const Text('Aggiungi Categoria'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Combina le categorie predefinite con quelle dal database
-    final allGenres = <String>{};
-    allGenres.addAll(AppConstants.defaultGenres);
-    allGenres.addAll(_genreDistribution.keys);
-    
-    final sortedGenres = allGenres.toList()
+    // Ordina le categorie: prima per numero di vinili (decrescente), poi alfabeticamente
+    final sortedCategories = List<models.Category>.from(_allCategories)
       ..sort((a, b) {
-        final countA = _genreDistribution[a] ?? 0;
-        final countB = _genreDistribution[b] ?? 0;
+        final countA = _genreDistribution[a.name] ?? 0;
+        final countB = _genreDistribution[b.name] ?? 0;
         if (countA != countB) {
           return countB.compareTo(countA); // Ordina per numero di vinili (decrescente)
         }
-        return a.compareTo(b); // Poi alfabeticamente
+        return a.name.compareTo(b.name); // Poi alfabeticamente
       });
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: sortedGenres.length,
+      itemCount: sortedCategories.length,
       itemBuilder: (context, index) {
-        final genre = sortedGenres[index];
-        final count = _genreDistribution[genre] ?? 0;
-        final color = _getGenreColor(genre);
+        final category = sortedCategories[index];
+        final count = _genreDistribution[category.name] ?? 0;
+        final color = _getGenreColor(category.name);
+        final canDelete = !category.isDefault && count == 0;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
@@ -252,7 +297,7 @@ class _CategorieViewState extends State<CategorieView> {
               ),
             ),
             title: Text(
-              genre,
+              category.name,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -264,44 +309,65 @@ class _CategorieViewState extends State<CategorieView> {
                 color: Colors.grey[600],
               ),
             ),
-            trailing: count > 0
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 26), // 0.1 * 255 = 26
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: color.withValues(alpha: 77), // 0.3 * 255 = 77
-                          ),
-                        ),
-                        child: Text(
-                          count.toString(),
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (category.isDefault) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[600],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Predefinita',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Colors.grey[400],
-                      ),
-                    ],
-                  )
-                : Icon(
-                    Icons.add,
-                    color: Colors.grey[400],
+                    ),
                   ),
-            onTap: count > 0 ? () => _navigateToGenreVinyls(genre) : null,
-            enabled: count > 0,
+                  const SizedBox(width: 8),
+                ],
+                if (canDelete) ...[
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => _showDeleteConfirmationDialog(category),
+                    color: Colors.red[400],
+                    iconSize: 20,
+                    tooltip: 'Elimina categoria',
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: count > 0 
+                        ? color.withValues(alpha: 26)
+                        : Colors.grey.withValues(alpha: 26),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: count > 0 
+                          ? color.withValues(alpha: 77)
+                          : Colors.grey.withValues(alpha: 77),
+                    ),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      color: count > 0 ? color : Colors.grey[600],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onTap: () => _navigateToGenreVinyls(category.name),
+            enabled: true,
           ),
         );
       },

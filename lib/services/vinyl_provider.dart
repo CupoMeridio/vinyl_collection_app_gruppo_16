@@ -57,6 +57,12 @@ class VinylProvider with ChangeNotifier {
   // STATO FILTRO: Genere selezionato per il filtro
   String _selectedGenre = 'Tutti';
   
+  // STATO FILTRO: Anno selezionato per il filtro
+  int? _selectedYear;
+  
+  // STATO FILTRO: Flag per mostrare solo preferiti
+  bool _showFavoritesOnly = false;
+  
   // STATO LOADING: Flag per feedback visivo durante operazioni async
   // PATTERN: Loading State per UX migliorata
   bool _isLoading = false;
@@ -83,6 +89,8 @@ class VinylProvider with ChangeNotifier {
   
   String get searchQuery => _searchQuery;
   String get selectedGenre => _selectedGenre;
+  int? get selectedYear => _selectedYear;
+  bool get showFavoritesOnly => _showFavoritesOnly;
   bool get isLoading => _isLoading;
   
   // === GETTERS COMPUTATI: DERIVED STATE PATTERN ===
@@ -398,50 +406,69 @@ class VinylProvider with ChangeNotifier {
      notifyListeners();
    }
    
-   // ADVANCED FILTERS: Applica filtri combinati
+   // ADVANCED FILTERS: Applica filtri combinati usando stato interno
    void applyAdvancedFilters({
      String? genre,
      int? year,
-     bool favoritesOnly = false,
+     bool? favoritesOnly,
      String sortBy = 'title',
    }) {
-     List<Vinyl> filtered = List.from(_vinyls);
+     // Aggiorna stato filtri se forniti
+     if (genre != null) _selectedGenre = genre;
+     if (year != null) _selectedYear = year;
+     if (favoritesOnly != null) _showFavoritesOnly = favoritesOnly;
      
-     // Applica filtro per genere
-     if (genre != null) {
-       filtered = filtered.where((vinyl) => vinyl.genre == genre).toList();
-     }
-     
-     // Applica filtro per anno
-     if (year != null) {
-       filtered = filtered.where((vinyl) => vinyl.year == year).toList();
-     }
-     
-     // Applica filtro per preferiti
-     if (favoritesOnly) {
-       filtered = filtered.where((vinyl) => vinyl.isFavorite).toList();
-     }
+     // Applica filtri usando la funzione centralizzata
+     _applyFilters();
      
      // Applica ordinamento
      switch (sortBy) {
        case 'title':
-         filtered.sort((a, b) => a.title.compareTo(b.title));
+         _filteredVinyls.sort((a, b) => a.title.compareTo(b.title));
          break;
        case 'artist':
-         filtered.sort((a, b) => a.artist.compareTo(b.artist));
+         _filteredVinyls.sort((a, b) => a.artist.compareTo(b.artist));
          break;
        case 'year':
-         filtered.sort((a, b) => a.year.compareTo(b.year));
+         _filteredVinyls.sort((a, b) => a.year.compareTo(b.year));
          break;
        case 'recent':
-         filtered.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+         _filteredVinyls.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
          break;
        case 'random':
-         filtered.shuffle();
+         _filteredVinyls.shuffle();
          break;
      }
      
-     _filteredVinyls = filtered;
+     notifyListeners();
+   }
+   
+   // FILTER SETTERS: Metodi per aggiornare singoli filtri
+   void setGenreFilter(String genre) {
+     _selectedGenre = genre;
+     _applyFilters();
+     notifyListeners();
+   }
+   
+   void setYearFilter(int? year) {
+     _selectedYear = year;
+     _applyFilters();
+     notifyListeners();
+   }
+   
+   void setFavoritesFilter(bool showFavoritesOnly) {
+     _showFavoritesOnly = showFavoritesOnly;
+     _applyFilters();
+     notifyListeners();
+   }
+   
+   // RESET FILTERS: Resetta tutti i filtri
+   void resetFilters() {
+     _selectedGenre = 'Tutti';
+     _selectedYear = null;
+     _showFavoritesOnly = false;
+     _searchQuery = '';
+     _applyFilters();
      notifyListeners();
    }
  
@@ -466,6 +493,16 @@ class VinylProvider with ChangeNotifier {
     // GENRE FILTER: Filtro esatto per categoria
     if (_selectedGenre != 'Tutti') {
       filtered = filtered.where((vinyl) => vinyl.genre == _selectedGenre).toList();
+    }
+    
+    // YEAR FILTER: Filtro esatto per anno (AND logic con altri filtri)
+    if (_selectedYear != null) {
+      filtered = filtered.where((vinyl) => vinyl.year == _selectedYear).toList();
+    }
+    
+    // FAVORITES FILTER: Filtro per preferiti (AND logic con altri filtri)
+    if (_showFavoritesOnly) {
+      filtered = filtered.where((vinyl) => vinyl.isFavorite).toList();
     }
     
     // RESULT ASSIGNMENT: Aggiorna cache filtrata

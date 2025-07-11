@@ -53,9 +53,9 @@ class _SearchViewState extends State<SearchView> {
   void _applyFilters() {
     final provider = Provider.of<VinylProvider>(context, listen: false);
     
-    // Applica filtri combinati
+    // Applica filtri combinati usando i nuovi metodi
     provider.applyAdvancedFilters(
-      genre: _selectedGenre != 'Tutti' ? _selectedGenre : null,
+      genre: _selectedGenre,
       year: _selectedYear,
       favoritesOnly: _showFavoritesOnly,
       sortBy: _sortBy,
@@ -373,13 +373,14 @@ class _SearchViewState extends State<SearchView> {
               Center(
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    final provider = Provider.of<VinylProvider>(context, listen: false);
+                    provider.resetFilters();
                     setState(() {
                       _selectedGenre = 'Tutti';
                       _selectedYear = null;
                       _showFavoritesOnly = false;
                       _sortBy = 'title';
                     });
-                    _applyFilters();
                   },
                   icon: Icon(Icons.clear_all),
                   label: Text('Reset Filtri'),

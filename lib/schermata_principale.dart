@@ -9,6 +9,7 @@ import 'services/vinyl_provider.dart';
 import 'utils/constants.dart';
 import 'dettaglio_vinile.dart';
 import 'models/vinyl.dart';
+import 'screens/add_edit_vinyl_screen.dart';
 
 
 
@@ -74,6 +75,47 @@ class _SchermataPState extends State<SchermataP> {
         ),
         initialRoute: '/',
         routes: {
+          '/': (context) => Scaffold(
+            body: IndexedStack(
+              index: realIndex,
+              children: [HomeView(), SearchView(), AnalisiView(key: UniqueKey())],
+            ),
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: realIndex,
+              onDestinationSelected: onSelection,
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.search),
+                  label: 'Ricerca',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.analytics),
+                  label: 'Analisi',
+                ),
+              ],
+            ),
+            floatingActionButton: realIndex == 0 ? FloatingActionButton(
+              onPressed: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final result = await Navigator.pushNamed(context, '/add_edit_vinyl');
+                if (result == true && mounted) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Vinile aggiunto alla collezione!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              backgroundColor: AppConstants.primaryColor,
+              tooltip: 'Aggiungi nuovo vinile',
+              child: const Icon(Icons.add, color: Colors.white),
+            ) : null,
+          ),
           '/search_View': (context) => const SearchView(),
           '/analisi_view': (context) => const AnalisiView(),
           '/home_view': (context) => const HomeView(),
@@ -82,7 +124,7 @@ class _SchermataPState extends State<SchermataP> {
             final genre = ModalRoute.of(context)!.settings.arguments as String;
             return GenreVinylsView(genre: genre);
           },
-
+          '/add_edit_vinyl': (context) => const AddEditVinylScreen(),
           '/DettaglioVinile': (context) {
             final vinyl = ModalRoute.of(context)!.settings.arguments as Vinyl;
             return SchermataDettaglio(
@@ -91,30 +133,6 @@ class _SchermataPState extends State<SchermataP> {
             );
             },
         },
-        home: Scaffold(
-          body: IndexedStack(
-            index: realIndex,
-            children: [HomeView(), SearchView(), AnalisiView(key: UniqueKey())],
-          ),
-              bottomNavigationBar: NavigationBar(
-                selectedIndex: realIndex,
-                onDestinationSelected: onSelection,
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.search),
-                    label: 'Ricerca',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.analytics),
-                    label: 'Analisi',
-                  ),
-                ],
-              ),
-            ),
         ),
       );
   }
