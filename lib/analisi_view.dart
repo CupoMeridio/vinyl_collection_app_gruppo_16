@@ -7,6 +7,7 @@ import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
 
 import 'package:vinyl_collection_app_gruppo_16/utils/grafico.dart';
 import 'package:vinyl_collection_app_gruppo_16/utils/drop_down.dart';
+import 'services/vinyl_provider.dart';
 
 
 
@@ -58,6 +59,7 @@ class Analisi extends StatelessWidget {
           child: Center(
             child: Column(
               children: [
+                TotaleVinili(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -122,6 +124,34 @@ class Analisi extends StatelessWidget {
         ),
       ),
       );
+  }
+}
+
+class TotaleVinili extends StatefulWidget {
+  const TotaleVinili({super.key});
+
+  @override
+  State<TotaleVinili> createState() => _TotaleViniliState();
+
+}
+
+class _TotaleViniliState extends State<TotaleVinili> {
+  @override
+  void initState() {
+    super.initState();
+    // Inizializza il provider all'avvio della schermata
+    Future.microtask(() {
+      if (mounted) {
+        Provider.of<VinylProvider>(context, listen: false).initialize();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Text("Totale vinili: ${Provider.of<VinylProvider>(context).totalVinyls}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppConstants.primaryColor)),
+                ],);
   }
 }
 
