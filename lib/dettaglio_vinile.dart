@@ -296,7 +296,7 @@ class SchermataDettaglio extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ViewDisco(vinile: vinile),
-              Container(
+              SizedBox(
                 height: 400, // Adjust this height as needed
                 child: ListView.builder(
                   shrinkWrap: true,

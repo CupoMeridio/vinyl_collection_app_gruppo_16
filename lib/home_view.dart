@@ -22,7 +22,9 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     // Inizializza il provider all'avvio della schermata
     Future.microtask(() {
-      Provider.of<VinylProvider>(context, listen: false).initialize();
+      if (mounted) {
+        Provider.of<VinylProvider>(context, listen: false).initialize();
+      }
     });
   }
 
