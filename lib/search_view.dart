@@ -24,6 +24,7 @@ class SearchView extends StatefulWidget {
 
 class _SearchViewState extends State<SearchView> {
   String _selectedGenre = 'Tutti';
+  String _selectedCondition = "Tutte";
   int? _selectedYear;
   bool _showFavoritesOnly = false;
   String _sortBy = 'title';
@@ -59,6 +60,7 @@ class _SearchViewState extends State<SearchView> {
       year: _selectedYear,
       favoritesOnly: _showFavoritesOnly,
       sortBy: _sortBy,
+      condition: _selectedCondition != "Tutte" ? _selectedCondition : null
     );
   }
 
@@ -230,7 +232,8 @@ class _SearchViewState extends State<SearchView> {
       builder: (context, provider, child) {
         final genres = ['Tutti', ...provider.genreDistribution.keys];
         final years = provider.vinyls.map((v) => v.year).toSet().toList()..sort((a, b) => b.compareTo(a));
-        
+        final conditions = ["Tutte", ...provider.conditionDistribution.keys];
+
         return Container(
           padding: const EdgeInsets.all(16.0),
           margin: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -310,6 +313,36 @@ class _SearchViewState extends State<SearchView> {
                       onChanged: (value) {
                         setState(() {
                           _selectedYear = value;
+                        });
+                        _applyFilters();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              //Filtro per condizione del vinile
+              Row(
+                children: [
+                  Icon(Icons.album, size: 20, color: Colors.grey[600]),
+                  const SizedBox(width: 8),
+                  Text('Condizione:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      key: Key('condition_filter_dropdown'),
+                      value: _selectedCondition,
+                      isExpanded: true,
+                      items: conditions.map((condition) {
+                        return DropdownMenuItem(
+                          value: condition,
+                          child: Text(condition),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCondition = value!;
                         });
                         _applyFilters();
                       },

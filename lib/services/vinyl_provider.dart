@@ -404,6 +404,7 @@ class VinylProvider with ChangeNotifier {
      int? year,
      bool favoritesOnly = false,
      String sortBy = 'title',
+     String? condition,
    }) {
      List<Vinyl> filtered = List.from(_vinyls);
      
@@ -420,6 +421,10 @@ class VinylProvider with ChangeNotifier {
      // Applica filtro per preferiti
      if (favoritesOnly) {
        filtered = filtered.where((vinyl) => vinyl.isFavorite).toList();
+     }
+
+     if (condition != null) {
+        filtered = filtered.where((vinyl) => vinyl.condition == condition).toList();
      }
      
      // Applica ordinamento
