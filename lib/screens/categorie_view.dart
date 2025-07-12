@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'services/database_service.dart';
-import 'models/category.dart' as models;
+import '../services/database_service.dart';
+import '../models/category.dart' as models;
+import '../utils/constants.dart';
 
 class CategorieView extends StatefulWidget {
   const CategorieView({super.key});
@@ -214,26 +215,7 @@ class _CategorieViewState extends State<CategorieView> {
     );
   }
 
-  Color _getGenreColor(String genre) {
-    const genreColors = {
-      'Rock': Colors.red,
-      'Pop': Colors.blue,
-      'Jazz': Colors.green,
-      'Blues': Colors.brown,
-      'Classical': Colors.purple,
-      'Electronic': Colors.cyan,
-      'Hip Hop': Colors.orange,
-      'Country': Colors.lime,
-      'Folk': Colors.teal,
-      'Reggae': Colors.lightGreen,
-      'Punk': Colors.pink,
-      'Metal': Colors.grey,
-      'R&B': Colors.deepPurple,
-      'Soul': Colors.amber,
-      'Funk': Colors.deepOrange,
-    };
-    return genreColors[genre] ?? Colors.indigo;
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +264,7 @@ class _CategorieViewState extends State<CategorieView> {
       itemBuilder: (context, index) {
         final category = sortedCategories[index];
         final count = _genreDistribution[category.name] ?? 0;
-        final color = _getGenreColor(category.name);
+        final color = AppConstants.getGenreColor(category.name);
         final canDelete = !category.isDefault && count == 0;
 
         return Card(
@@ -328,7 +310,6 @@ class _CategorieViewState extends State<CategorieView> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                 ],
                 if (canDelete) ...[
                   IconButton(
@@ -338,32 +319,7 @@ class _CategorieViewState extends State<CategorieView> {
                     iconSize: 20,
                     tooltip: 'Elimina categoria',
                   ),
-                  const SizedBox(width: 8),
                 ],
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: count > 0 
-                        ? color.withValues(alpha: 26)
-                        : Colors.grey.withValues(alpha: 26),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: count > 0 
-                          ? color.withValues(alpha: 77)
-                          : Colors.grey.withValues(alpha: 77),
-                    ),
-                  ),
-                  child: Text(
-                    count.toString(),
-                    style: TextStyle(
-                      color: count > 0 ? color : Colors.grey[600],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ],
             ),
             onTap: () => _navigateToGenreVinyls(category.name),

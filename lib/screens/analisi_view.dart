@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
-import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';
-import 'package:vinyl_collection_app_gruppo_16/models/section.dart';
-import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
+import '../utils/constants.dart';
+import '../services/database_service.dart';
+import '../models/section.dart';
+import '../models/vinyl.dart';
 
-import 'package:vinyl_collection_app_gruppo_16/utils/grafico.dart';
-import 'package:vinyl_collection_app_gruppo_16/utils/drop_down.dart';
-import 'services/vinyl_provider.dart';
+import '../utils/grafico.dart';
+import '../utils/drop_down.dart';
+import '../services/vinyl_provider.dart';
 
 
 
@@ -24,29 +24,8 @@ class AnalisiView extends StatelessWidget{
 }
 
 
-
-
-
 class Analisi extends StatelessWidget {
   const Analisi({super.key});
-
-  static const Map<String, Color> generiColori = {
-    'Rock': Colors.red,
-    'Pop': Colors.blue,
-    'Jazz': Colors.green,
-    'Blues': Colors.brown,
-    'Classical': Colors.purple,
-    'Electronic': Colors.cyan,
-    'Hip Hop': Colors.orange,
-    'Country': Colors.lime,
-    'Folk': Colors.teal,
-    'Reggae': Colors.lightGreen,
-    'Punk': Colors.pink,
-    'Metal': Colors.grey,
-    'R&B': Colors.deepPurple,
-    'Soul': Colors.amber,
-    'Funk': Colors.deepOrange,
-  };
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,7 +33,7 @@ class Analisi extends StatelessWidget {
         title: Text('Analisi Vinile'),
         ),
         body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
             child: Column(
@@ -69,7 +48,7 @@ class Analisi extends StatelessWidget {
                       child: SizedBox(
                         width: 180,
                         height: 180,
-                        child: GraficoATorta(generiColori),
+                        child: GraficoATorta(AppConstants.genreColors),
                       ),
                     ),
                     SizedBox(
@@ -100,7 +79,7 @@ class Analisi extends StatelessWidget {
                                     dense: true,
                                     title: Text(genere, style: const TextStyle(fontSize: 13)),
                                     leading: Icon(Icons.music_note, size: 18),
-                                    iconColor: generiColori[genere] ?? Colors.grey,
+                                    iconColor: AppConstants.getGenreColor(genere),
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                                   )),
                             ],
@@ -141,7 +120,6 @@ class Analisi extends StatelessWidget {
                   height: 250,
                   child: const ViniliPiuVecchi(),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),

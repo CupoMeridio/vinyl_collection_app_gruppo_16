@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
-import 'services/vinyl_provider.dart';
-import 'models/vinyl.dart';
+import '../utils/constants.dart';
+import '../services/vinyl_provider.dart';
+import '../models/vinyl.dart';
 import 'dart:io';
 
 class GenreVinylsView extends StatefulWidget {
@@ -159,30 +159,11 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
     );
   }
 
-  Color _getGenreColor(String genre) {
-    const genreColors = {
-      'Rock': Colors.red,
-      'Pop': Colors.blue,
-      'Jazz': Colors.green,
-      'Blues': Colors.brown,
-      'Classical': Colors.purple,
-      'Electronic': Colors.cyan,
-      'Hip Hop': Colors.orange,
-      'Country': Colors.lime,
-      'Folk': Colors.teal,
-      'Reggae': Colors.lightGreen,
-      'Punk': Colors.pink,
-      'Metal': Colors.grey,
-      'R&B': Colors.deepPurple,
-      'Soul': Colors.amber,
-      'Funk': Colors.deepOrange,
-    };
-    return genreColors[genre] ?? Colors.indigo;
-  }
+
 
   @override
   Widget build(BuildContext context) {
-    final genreColor = _getGenreColor(widget.genre);
+    final genreColor = AppConstants.getGenreColor(widget.genre);
     
     return Scaffold(
       appBar: AppBar(

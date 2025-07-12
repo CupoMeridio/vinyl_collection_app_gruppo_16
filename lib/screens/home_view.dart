@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 // Import dei servizi e schermate necessari
-import 'services/vinyl_provider.dart';
-import 'utils/constants.dart';
-import "models/section.dart";
+import '../services/vinyl_provider.dart';
+import '../utils/constants.dart';
+import "../models/section.dart";
 import 'search_view.dart';
 
 class HomeView extends StatefulWidget {

@@ -84,4 +84,31 @@ class AppConstants {
     'Soul',
     'Funk'
   ];
+  
+  // === COLORI DEI GENERI MUSICALI ===
+  // Mappa che associa ogni genere musicale a un colore specifico
+  // Utilizzata per la visualizzazione coerente dei generi nell'interfaccia
+  static const Map<String, Color> genreColors = {
+    'Rock': Colors.red,
+    'Pop': Colors.blue,
+    'Jazz': Colors.green,
+    'Blues': Colors.brown,
+    'Classical': Colors.purple,
+    'Electronic': Colors.cyan,
+    'Hip Hop': Colors.orange,
+    'Country': Colors.lime,
+    'Folk': Colors.teal,
+    'Reggae': Colors.lightGreen,
+    'Punk': Colors.pink,
+    'Metal': Colors.grey,
+    'R&B': Colors.deepPurple,
+    'Soul': Colors.amber,
+    'Funk': Colors.deepOrange,
+  };
+  
+  // Metodo helper per ottenere il colore di un genere
+  // Restituisce un colore di default se il genere non è trovato
+  static Color getGenreColor(String genre) {
+    return genreColors[genre] ?? Colors.indigo;
+  }
 }

@@ -34,7 +34,7 @@ import 'services/vinyl_provider.dart';
 import 'utils/constants.dart';
 
 // Import della schermata principale con navigazione
-import 'schermata_principale.dart';
+import 'screens/schermata_principale.dart';
 
 // === ENTRY POINT: BOOTSTRAP DELL'APPLICAZIONE ===
 // PATTERN: Application Bootstrap con configurazione centralizzata

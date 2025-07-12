@@ -198,13 +198,13 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
      
       _songsToSave.add(
         Song(
+          '',
+          _artistController.text,
+          int.tryParse(_yearController.text) ?? DateTime.now().year,
           id: null, //  null per le nuove canzoni
           vinylId:
               widget.vinyl?.id ??
               0, // Placeholder, sarà corretto al salvataggio nel DB
-          titolo: '',
-          artista: _artistController.text,
-          anno: int.tryParse(_yearController.text) ?? DateTime.now().year,
         ),
       );
     });
@@ -305,14 +305,14 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       for (int i = 0; i < _songTitleControllers.length; i++) {
         finalSongs.add(
           Song(
+            _songTitleControllers[i].text.trim(),
+            _songArtistControllers[i].text.trim(),
+            int.tryParse(_songYearControllers[i].text.trim()) ?? 0,
             id: _songsToSave[i]
                 .id, // Mantiene l'ID se esistente per l'aggiornamento
             vinylId:
                 widget.vinyl?.id ??
                 0, // Placeholder, sarà assegnato al salvataggio nel DB
-            titolo: _songTitleControllers[i].text.trim(),
-            artista: _songArtistControllers[i].text.trim(),
-            anno: int.tryParse(_songYearControllers[i].text.trim()) ?? 0,
             trackNumber: int.tryParse(
               _songTrackNumberControllers[i].text.trim(),
             ),
