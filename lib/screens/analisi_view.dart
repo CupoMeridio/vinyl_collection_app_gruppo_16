@@ -40,54 +40,130 @@ class Analisi extends StatelessWidget {
               children: [
                 const TotaleVinili(),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: SizedBox(
-                        width: 180,
-                        height: 180,
-                        child: GraficoATorta(AppConstants.genreColors),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 150,
-                      height: 180,
-                      child: FutureBuilder<Map<String, int>>(
-                        future: DatabaseService().getGenreDistribution(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState != ConnectionState.done) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError || !snapshot.hasData) {
-                            return const Center(child: Text('Errore caricamento'));
-                          }
-                          
-                          final generi = snapshot.data!.keys.toList();
-                          return ListView(
-                            children: [
-                              const Text(
-                                "Generi Musicali",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.primaryColor
-                                ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Se la larghezza è troppo stretta, usa layout verticale
+                    if (constraints.maxWidth < 400) {
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: 180,
+                              height: 180,
+                              child: GraficoATorta(AppConstants.genreColors),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Center(
+                             child: SizedBox(
+                               width: 280,
+                               height: 200,
+                              child: FutureBuilder<Map<String, int>>(
+                                future: DatabaseService().getGenreDistribution(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState != ConnectionState.done) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  }
+                                  if (snapshot.hasError || !snapshot.hasData) {
+                                    return const Center(child: Text('Errore caricamento'));
+                                  }
+                                  
+                                  final generi = snapshot.data!.keys.toList();
+                                  return ListView(
+                                    children: [
+                                      const Center(
+                                        child: Text(
+                                          "Generi Musicali",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppConstants.primaryColor
+                                          ),
+                                        ),
+                                      ),
+                                      ...generi.map((genere) => Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.music_note, 
+                                                    size: 18,
+                                                    color: AppConstants.getGenreColor(genere),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    genere,
+                                                    style: const TextStyle(fontSize: 13),
+                                                  ),
+                                                ],
+                                              ),
+                                            ))
+                                    ],
+                                    
+                                  );
+                                },
                               ),
-                              ...generi.map((genere) => ListTile(
-                                    dense: true,
-                                    title: Text(genere, style: const TextStyle(fontSize: 13)),
-                                    leading: Icon(Icons.music_note, size: 18),
-                                    iconColor: AppConstants.getGenreColor(genere),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                                  )),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                            ),
+                          )
+                        ],
+                      );
+                    } else {
+                      // Layout orizzontale per schermi più larghi
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: SizedBox(
+                              width: 180,
+                              height: 180,
+                              child: GraficoATorta(AppConstants.genreColors),
+                            ),
+                          ),
+                          Flexible(
+                            child: SizedBox(
+                              width: 150,
+                              height: 180,
+                              child: FutureBuilder<Map<String, int>>(
+                                future: DatabaseService().getGenreDistribution(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState != ConnectionState.done) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  }
+                                  if (snapshot.hasError || !snapshot.hasData) {
+                                    return const Center(child: Text('Errore caricamento'));
+                                  }
+                                  
+                                  final generi = snapshot.data!.keys.toList();
+                                  return ListView(
+                                    children: [
+                                      const Text(
+                                        "Generi Musicali",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppConstants.primaryColor
+                                        ),
+                                      ),
+                                      ...generi.map((genere) => ListTile(
+                                            dense: true,
+                                            title: Text(genere, style: const TextStyle(fontSize: 13)),
+                                            leading: Icon(Icons.music_note, size: 18),
+                                            iconColor: AppConstants.getGenreColor(genere),
+                                            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                          )),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 const Padding(

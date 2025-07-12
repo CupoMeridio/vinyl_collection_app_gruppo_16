@@ -90,7 +90,7 @@ class _ViewDiscoState extends State<ViewDisco> {
 
   @override
   Widget build(BuildContext context) {
-    Widget _schermataSmartphone(){
+    Widget schermataSmartphone(){
       return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Column(
@@ -147,7 +147,7 @@ class _ViewDiscoState extends State<ViewDisco> {
     );
     }
 
-    Widget _schermataTabletDesktop() {
+    Widget schermataTabletDesktop() {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
         child: Row(
@@ -199,9 +199,9 @@ class _ViewDiscoState extends State<ViewDisco> {
       );
     }
     if (context.isMobile){
-      return _schermataSmartphone();
+      return schermataSmartphone();
     }else{
-      return _schermataTabletDesktop();
+      return schermataTabletDesktop();
     }
   }
 }
