@@ -9,7 +9,8 @@ import '../screens/add_edit_vinyl_screen.dart';
 
 class ViewDisco extends StatefulWidget {
   final Vinyl vinile;
-  const ViewDisco({super.key, required this.vinile});
+  final VoidCallback? onVinylUpdated;
+  const ViewDisco({super.key, required this.vinile, this.onVinylUpdated});
 
   @override
   State<ViewDisco> createState() => _ViewDiscoState();
@@ -169,6 +170,10 @@ class _ViewDiscoState extends State<ViewDisco> {
                         // REFRESH: Ricarica dati se vinile modificato con successo
                         if (result == true && mounted) {
                           await _refreshVinyl();
+                          // Chiama il callback per aggiornare anche la schermata padre
+                          if (widget.onVinylUpdated != null) {
+                            widget.onVinylUpdated!();
+                          }
                           scaffoldMessenger.showSnackBar(
                             SnackBar(
                               content: Text('Vinile modificato con successo!'),
@@ -260,10 +265,44 @@ class CanzoniItem implements ListItem {
 }
 
 
-class SchermataDettaglio extends StatelessWidget {
+class SchermataDettaglio extends StatefulWidget {
   final List<ListItem> items;
   final Vinyl vinile;
   const SchermataDettaglio({super.key, required this.items, required this.vinile});
+
+  @override
+  State<SchermataDettaglio> createState() => _SchermataDettaglioState();
+}
+
+class _SchermataDettaglioState extends State<SchermataDettaglio> {
+  late Vinyl currentVinyl;
+  late List<ListItem> currentItems;
+
+  @override
+  void initState() {
+    super.initState();
+    currentVinyl = widget.vinile;
+    currentItems = widget.items;
+  }
+
+  Future<void> _refreshVinylAndSongs() async {
+    final provider = Provider.of<VinylProvider>(context, listen: false);
+    // Ricarica tutti i vinili per aggiornare la cache
+    await provider.loadVinyls();
+    // Cerca il vinile aggiornato nella cache
+    final updatedVinyl = provider.getVinylById(widget.vinile.id!);
+    if (updatedVinyl != null && mounted) {
+      // Crea la lista aggiornata di CanzoniItem dalle canzoni del vinile
+      List<CanzoniItem> songItems = [];
+      if (updatedVinyl.song != null && updatedVinyl.song!.isNotEmpty) {
+        songItems = updatedVinyl.song!.map((song) => CanzoniItem(song)).toList();
+      }
+      setState(() {
+        currentVinyl = updatedVinyl;
+        currentItems = songItems;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -283,21 +322,84 @@ class SchermataDettaglio extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              ViewDisco(vinile: vinile),
-              SizedBox(
-                height: 400, // Adjust this height as needed
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(), // Disable inner scrolling
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final ListItem item = items[index];
-                    return ListTile(
-                      leading: Icon(Icons.music_note),
-                      title: item.buildTopPart(context),
-                      subtitle: item.buildBottomPart(context),
-                    );
-                  },
+              ViewDisco(
+                vinile: currentVinyl,
+                onVinylUpdated: _refreshVinylAndSongs,
+              ),
+              // Sezione Canzoni
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Canzoni',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (currentItems.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.music_off,
+                              size: 48,
+                              color: Colors.grey.withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Nessuna canzone aggiunta',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.withValues(alpha: 0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Le canzoni di questo vinile non sono state ancora inserite',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.withValues(alpha: 0.6),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: currentItems.length,
+                        itemBuilder: (context, index) {
+                          final ListItem item = currentItems[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppConstants.primaryColor.withValues(alpha: 0.1),
+                                child: Icon(
+                                  Icons.music_note,
+                                  color: AppConstants.primaryColor,
+                                ),
+                              ),
+                              title: item.buildTopPart(context),
+                              subtitle: item.buildBottomPart(context),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
                 ),
               ),
             ],

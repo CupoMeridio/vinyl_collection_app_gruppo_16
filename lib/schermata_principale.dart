@@ -118,9 +118,14 @@ class _SchermataPState extends State<SchermataP> {
           '/add_edit_vinyl': (context) => const AddEditVinylScreen(),
           '/DettaglioVinile': (context) {
             final vinyl = ModalRoute.of(context)!.settings.arguments as Vinyl;
+            // Crea la lista di CanzoniItem dalle canzoni del vinile
+            List<CanzoniItem> songItems = [];
+            if (vinyl.song != null && vinyl.song!.isNotEmpty) {
+              songItems = vinyl.song!.map((song) => CanzoniItem(song)).toList();
+            }
             return SchermataDettaglio(
               vinile: vinyl,
-              items: [], // Pass the list of songs if you have them, or leave empty
+              items: songItems,
             );
             },
         },
