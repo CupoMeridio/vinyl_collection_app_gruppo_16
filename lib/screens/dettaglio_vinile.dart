@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vinyl_collection_app_gruppo_16/utils/schermo_adattivo.dart';
 import '../utils/constants.dart';
 import '../models/song_.dart';
 import '../models/vinyl.dart';
@@ -89,7 +90,8 @@ class _ViewDiscoState extends State<ViewDisco> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    Widget _schermataSmartphone(){
+      return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -143,6 +145,64 @@ class _ViewDiscoState extends State<ViewDisco> {
         ],
       ),
     );
+    }
+
+    Widget _schermataTabletDesktop() {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 200,
+              height: 200,
+              child: currentVinyl.imagePath != null
+                  ? Image.file(
+                      File(currentVinyl.imagePath!),
+                      fit: BoxFit.cover,
+                    )
+                  : Container(
+                      color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                      child: Icon(Icons.album, color: AppConstants.primaryColor.withValues(alpha: 0.5), size: 80),
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currentVinyl.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Artista", currentVinyl.artist),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Anno", currentVinyl.year.toString()),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Genere", currentVinyl.genre),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Casa Discografica", currentVinyl.label),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Condizioni", currentVinyl.condition),
+                  const SizedBox(height: 8),
+                  _buildInfoRow("Data Aggiunta", currentVinyl.dateAdded.toLocal().toString().split(' ')[0]),
+                  if (currentVinyl.notes != null && currentVinyl.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildNotesSection(currentVinyl.notes!),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (context.isMobile){
+      return _schermataSmartphone();
+    }else{
+      return _schermataTabletDesktop();
+    }
   }
 }
 
