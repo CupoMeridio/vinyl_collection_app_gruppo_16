@@ -100,16 +100,7 @@ class _SchermataPState extends State<SchermataP> {
             ),
             floatingActionButton: realIndex == 0 ? FloatingActionButton(
               onPressed: () async {
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                final result = await Navigator.pushNamed(context, '/add_edit_vinyl');
-                if (result == true && mounted) {
-                  scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Vinile aggiunto alla collezione!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
+                await Navigator.pushNamed(context, '/add_edit_vinyl');
               },
               backgroundColor: AppConstants.primaryColor,
               tooltip: 'Aggiungi nuovo vinile',

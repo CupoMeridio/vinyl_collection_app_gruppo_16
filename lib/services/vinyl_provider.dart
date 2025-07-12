@@ -63,6 +63,12 @@ class VinylProvider with ChangeNotifier {
   // STATO FILTRO: Flag per mostrare solo preferiti
   bool _showFavoritesOnly = false;
   
+  // STATO FILTRO: Condizione selezionata per il filtro
+  String? _selectedCondition;
+  
+  // STATO ORDINAMENTO: Flag per ordinamento crescente/decrescente
+  bool _sortAscending = true;
+  
   // STATO LOADING: Flag per feedback visivo durante operazioni async
   // PATTERN: Loading State per UX migliorata
   bool _isLoading = false;
@@ -91,6 +97,8 @@ class VinylProvider with ChangeNotifier {
   String get selectedGenre => _selectedGenre;
   int? get selectedYear => _selectedYear;
   bool get showFavoritesOnly => _showFavoritesOnly;
+  String? get selectedCondition => _selectedCondition;
+  bool get sortAscending => _sortAscending;
   bool get isLoading => _isLoading;
   
   // === GETTERS COMPUTATI: DERIVED STATE PATTERN ===
@@ -413,28 +421,39 @@ class VinylProvider with ChangeNotifier {
      bool? favoritesOnly,
      String sortBy = 'title',
      String? condition,
+     bool? ascending,
    }) {
      // Aggiorna stato filtri se forniti
      if (genre != null) _selectedGenre = genre;
      if (year != null) _selectedYear = year;
      if (favoritesOnly != null) _showFavoritesOnly = favoritesOnly;
+     if (condition != null) _selectedCondition = condition;
+     if (ascending != null) _sortAscending = ascending;
      
      // Applica filtri usando la funzione centralizzata
      _applyFilters();
      
-     // Applica ordinamento
+     // Applica ordinamento con supporto crescente/decrescente
      switch (sortBy) {
        case 'title':
-         _filteredVinyls.sort((a, b) => a.title.compareTo(b.title));
+         _filteredVinyls.sort((a, b) => _sortAscending 
+           ? a.title.compareTo(b.title) 
+           : b.title.compareTo(a.title));
          break;
        case 'artist':
-         _filteredVinyls.sort((a, b) => a.artist.compareTo(b.artist));
+         _filteredVinyls.sort((a, b) => _sortAscending 
+           ? a.artist.compareTo(b.artist) 
+           : b.artist.compareTo(a.artist));
          break;
        case 'year':
-         _filteredVinyls.sort((a, b) => a.year.compareTo(b.year));
+         _filteredVinyls.sort((a, b) => _sortAscending 
+           ? a.year.compareTo(b.year) 
+           : b.year.compareTo(a.year));
          break;
        case 'recent':
-         _filteredVinyls.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+         _filteredVinyls.sort((a, b) => _sortAscending 
+           ? a.dateAdded.compareTo(b.dateAdded) 
+           : b.dateAdded.compareTo(a.dateAdded));
          break;
        case 'random':
          _filteredVinyls.shuffle();
@@ -463,12 +482,19 @@ class VinylProvider with ChangeNotifier {
      notifyListeners();
    }
    
+   void setSortOrder(bool ascending) {
+     _sortAscending = ascending;
+     notifyListeners();
+   }
+   
    // RESET FILTERS: Resetta tutti i filtri
    void resetFilters() {
      _selectedGenre = 'Tutti';
      _selectedYear = null;
      _showFavoritesOnly = false;
+     _selectedCondition = null;
      _searchQuery = '';
+     _sortAscending = true;
      _applyFilters();
      notifyListeners();
    }
@@ -504,6 +530,11 @@ class VinylProvider with ChangeNotifier {
     // FAVORITES FILTER: Filtro per preferiti (AND logic con altri filtri)
     if (_showFavoritesOnly) {
       filtered = filtered.where((vinyl) => vinyl.isFavorite).toList();
+    }
+    
+    // CONDITION FILTER: Filtro per condizione del vinile
+    if (_selectedCondition != null && _selectedCondition != 'Tutte') {
+      filtered = filtered.where((vinyl) => vinyl.condition == _selectedCondition).toList();
     }
     
     // RESULT ASSIGNMENT: Aggiorna cache filtrata

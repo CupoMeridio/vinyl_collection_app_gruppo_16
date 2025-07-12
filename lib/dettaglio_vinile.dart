@@ -60,6 +60,41 @@ class _ViewDiscoState extends State<ViewDisco> {
     );
   }
 
+  Widget _buildNotesSection(String notes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Note:",
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+            const Spacer(),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            notes,
+            style: const TextStyle(fontSize: 14),
+            textAlign: TextAlign.left,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -108,7 +143,7 @@ class _ViewDiscoState extends State<ViewDisco> {
                 _buildInfoRow("Data Aggiunta", currentVinyl.dateAdded.toLocal().toString().split(' ')[0]),
                 if (currentVinyl.notes != null && currentVinyl.notes!.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  _buildInfoRow("Note", currentVinyl.notes!),
+                  _buildNotesSection(currentVinyl.notes!),
                 ],
               ],
             ),

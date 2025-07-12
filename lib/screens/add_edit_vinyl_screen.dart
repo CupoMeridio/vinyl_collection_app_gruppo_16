@@ -715,7 +715,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             ),
             SizedBox(height: AppConstants.spacingMedium),
             
-            // NOTES FIELD: Campo note multilinea
+            // NOTES FIELD: Campo note multilinea con limite caratteri
             TextFormField(
               key: Key('vinyl_notes_field'),
               controller: _notesController,
@@ -727,10 +727,15 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                   borderRadius: BorderRadius.circular(AppConstants.borderRadius),
                 ),
                 alignLabelWithHint: true,
+                counterText: '${_notesController.text.length}/500',
               ),
               maxLines: 4,
+              maxLength: 500,
               textCapitalization: TextCapitalization.sentences,
               autofillHints: [AutofillHints.addressCityAndState],
+              onChanged: (value) {
+                setState(() {}); // Aggiorna il counter
+              },
             ),
           ],
         ),
