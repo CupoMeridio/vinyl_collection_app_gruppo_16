@@ -71,7 +71,21 @@ class GraficoATorta extends StatelessWidget {
   }
 }
 
+class ScritteRuotate extends StatelessWidget {
+  final String text;
+  const ScritteRuotate({super.key, required this.text});
 
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: -90 * (3.1415926535 / 180),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
 class GraficoALinee extends StatelessWidget {
   final DatabaseService db = DatabaseService();
   late final String anno; // Anno di default per il grafico
@@ -105,8 +119,9 @@ class GraficoALinee extends StatelessWidget {
                   sideTitles: SideTitles(showTitles: false),
                   axisNameWidget: Text(
                     'Numero di Vinili',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -119,29 +134,29 @@ class GraficoALinee extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       switch (value.toInt()) {
                         case 1:
-                          return Text('Gen');
+                          return ScritteRuotate(text: 'Gen');
                         case 2:
-                          return Text('Feb');
+                          return ScritteRuotate(text: 'Feb');
                         case 3:
-                          return Text('Mar');
+                          return ScritteRuotate(text: 'Mar');
                         case 4:
-                          return Text('Apr');
+                          return ScritteRuotate(text: 'Apr');
                         case 5:
-                          return Text('Mag');
+                          return ScritteRuotate(text:'Mag');
                         case 6:
-                          return Text('Giu');
+                          return ScritteRuotate(text:'Giu');
                         case 7:
-                          return Text('Lug');
+                          return ScritteRuotate(text:'Lug'); 
                         case 8:
-                          return Text('Ago');
+                          return ScritteRuotate(text:'Ago');
                         case 9:
-                          return Text('Set');
+                          return ScritteRuotate(text:'Set');
                         case 10:
-                          return Text('Ott');
+                          return ScritteRuotate(text:'Ott');
                         case 11:
-                          return Text('Nov');
+                          return ScritteRuotate(text:'Nov');
                         case 12:
-                          return Text('Dic');
+                          return ScritteRuotate(text:'Dic');
                         default:
                           return const SizedBox.shrink();
                       }
@@ -150,13 +165,6 @@ class GraficoALinee extends StatelessWidget {
                 ),
                 topTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text(
-                    'Mesi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ),
               lineBarsData: [

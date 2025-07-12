@@ -54,7 +54,7 @@ class Analisi extends StatelessWidget {
         title: Text('Analisi Vinile'),
         ),
         body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const  ClampingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(10, 16, 10, 16),
             child: Column(
@@ -141,7 +141,6 @@ class Analisi extends StatelessWidget {
                   height: 250,
                   child: const ViniliPiuVecchi(),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),
