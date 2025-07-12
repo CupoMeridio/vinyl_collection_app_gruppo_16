@@ -70,6 +70,40 @@ class Analisi extends StatelessWidget {
                                   }
                                   
                                   final generi = snapshot.data!.keys.toList();
+                                  
+                                  if (generi.isEmpty) {
+                                    return Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.music_note,
+                                            size: 48,
+                                            color: Colors.grey[400],
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            'Nessun genere',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Aggiungi vinili per\nvedere i generi',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                  
                                   return ListView(
                                     children: [
                                       const Center(
@@ -137,6 +171,40 @@ class Analisi extends StatelessWidget {
                                   }
                                   
                                   final generi = snapshot.data!.keys.toList();
+                                  
+                                  if (generi.isEmpty) {
+                                    return Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.music_note,
+                                            size: 48,
+                                            color: Colors.grey[400],
+                                          ),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            'Nessun genere',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Aggiungi vinili per\nvedere i generi',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                  
                                   return ListView(
                                     children: [
                                       const Text(

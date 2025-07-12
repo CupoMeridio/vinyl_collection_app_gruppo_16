@@ -32,6 +32,41 @@ class GraficoATorta extends StatelessWidget {
         final Map<String, int> generiDistribution = snapshot.data![0] as Map<String, int>;
         final int totaleVinili = snapshot.data![1] as int;
         final List<String> generi = generiDistribution.keys.toList();
+        
+        // Gestione stato vuoto quando non ci sono vinili
+        if (totaleVinili == 0 || generi.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.pie_chart_outline,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Nessun dato disponibile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Aggiungi dei vinili per vedere\nla distribuzione per genere',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
         List<DatiGrafico> dati = [];
 
         for (var genere in generi) {
@@ -108,7 +143,54 @@ class GraficoALinee extends StatelessWidget {
         }
         final Map<int, Map<int, List<Vinyl>>> distribuzionePerAnno =
             snapshot.data as Map<int, Map<int, List<Vinyl>>>;
-        // You can use snapshot.data here to build your chart with real data
+        
+        // Verifica se ci sono dati per l'anno selezionato
+        final Map<int, List<Vinyl>>? datiAnno = distribuzionePerAnno[int.parse(anno)];
+        bool hasData = false;
+        
+        if (datiAnno != null) {
+          for (var mese in datiAnno.values) {
+            if (mese.isNotEmpty) {
+              hasData = true;
+              break;
+            }
+          }
+        }
+        
+        // Gestione stato vuoto quando non ci sono dati per l'anno
+        if (!hasData) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.show_chart,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Nessun dato per il $anno',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Non ci sono vinili aggiunti\nnell\'anno selezionato',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
         return Padding(
           padding: const EdgeInsets.only(right: 10, left: 10, bottom: 70),
           child: LineChart(

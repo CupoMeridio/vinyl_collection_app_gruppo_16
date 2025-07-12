@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 // Import dei modelli e servizi necessari
@@ -12,6 +13,7 @@ import '../models/song_.dart';
 import '../services/vinyl_provider.dart';
 import '../services/database_service.dart';
 import '../utils/constants.dart';
+import '../utils/schermo_adattivo.dart';
 
 // === SCHERMATA AGGIUNTA/MODIFICA VINILE ===
 // PATTERN: Form Validation Strategy per input sicuri
@@ -56,6 +58,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
   // PATTERN: File Strategy per gestione immagini
   File? _selectedImage;
   String? _existingImagePath;
+  Uint8List? _selectedImageBytes; // Bytes dell'immagine per Flutter Web
   final ImagePicker _imagePicker = ImagePicker();
 
   // === LOADING STATE ===
@@ -239,14 +242,96 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       );
 
       if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
+        if (kIsWeb) {
+          // Su web, leggi i bytes dell'immagine
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _selectedImageBytes = bytes;
+            _selectedImage = null; // Non usare File su web
+          });
+        } else {
+          // Su mobile, usa File normalmente
+          setState(() {
+            _selectedImage = File(image.path);
+            _selectedImageBytes = null;
+          });
+        }
       }
     } catch (e) {
       // ERROR HANDLING: Gestione errori selezione immagine
       _showErrorSnackBar('Errore nella selezione dell\'immagine: $e');
     }
+  }
+
+  // === CAMERA SELECTION: Gestione selezione da fotocamera ===
+  Future<void> _selectImageFromCamera() async {
+    try {
+      // Su web, la fotocamera non è sempre disponibile
+      if (kIsWeb) {
+        _showErrorSnackBar('Fotocamera non disponibile su web. Usa galleria o URL.');
+        return;
+      }
+
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        if (kIsWeb) {
+          // Su web, leggi i bytes dell'immagine
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _selectedImageBytes = bytes;
+            _selectedImage = null; // Non usare File su web
+          });
+        } else {
+          // Su mobile, usa File normalmente
+          setState(() {
+            _selectedImage = File(image.path);
+            _selectedImageBytes = null;
+          });
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Errore nell\'acquisizione dalla fotocamera: $e');
+    }
+  }
+
+
+
+  // === IMAGE SOURCE SELECTION: Mostra opzioni selezione immagine ===
+  Future<void> _showImageSourceSelection() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galleria'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _selectImage();
+                },
+              ),
+              if (!kIsWeb)
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Fotocamera'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _selectImageFromCamera();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // === FORM VALIDATION: Validazione campi obbligatori ===
@@ -332,7 +417,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
         label: _labelController.text.trim(),
         condition: _selectedCondition,
         isFavorite: _isFavorite,
-        imagePath: _selectedImage?.path ?? _existingImagePath,
+        imagePath: _selectedImageBytes != null 
+            ? 'web_image_${DateTime.now().millisecondsSinceEpoch}' 
+            : (_selectedImage?.path ?? _existingImagePath),
         dateAdded: widget.vinyl?.dateAdded ?? DateTime.now(),
         notes: _notesController.text.trim().isEmpty
             ? null
@@ -515,7 +602,14 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 border: Border.all(color: Colors.grey[300]!),
                 color: Colors.grey[100],
               ),
-              child: _selectedImage != null
+              child: _selectedImageBytes != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.borderRadius,
+                      ),
+                      child: Image.memory(_selectedImageBytes!, fit: BoxFit.cover),
+                    )
+                  : _selectedImage != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(
                         AppConstants.borderRadius,
@@ -545,19 +639,20 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _selectImage,
-                  icon: Icon(Icons.photo_library),
-                  label: Text('Seleziona'),
+                  onPressed: _showImageSourceSelection,
+                  icon: Icon(Icons.add_photo_alternate),
+                  label: Text('Aggiungi'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.primaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
-                if (_selectedImage != null || _existingImagePath != null)
+                if (_selectedImage != null || _selectedImageBytes != null || _existingImagePath != null)
                   ElevatedButton.icon(
                     onPressed: () {
                       setState(() {
                         _selectedImage = null;
+                        _selectedImageBytes = null;
                         _existingImagePath = null;
                       });
                     },
@@ -655,56 +750,100 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
 
             SizedBox(height: AppConstants.spacingMedium),
 
-            // YEAR AND LABEL ROW: Anno e etichetta in riga
-            Row(
-              children: [
-                // YEAR FIELD: Campo anno
-                Expanded(
-                  flex: 1,
-                  child: TextFormField(
-                    key: Key('vinyl_year_field'),
-                    controller: _yearController,
-                    decoration: InputDecoration(
-                      labelText: 'Anno *',
-                      hintText: 'es. 1975',
-                      prefixIcon: Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.borderRadius,
+            // YEAR AND LABEL: Layout responsivo per anno e etichetta
+            context.isMobile
+                ? Column(
+                    children: [
+                      // YEAR FIELD: Campo anno (su riga separata per mobile)
+                      TextFormField(
+                        key: Key('vinyl_year_field'),
+                        controller: _yearController,
+                        decoration: InputDecoration(
+                          labelText: 'Anno *',
+                          hintText: 'es. 1975',
+                          prefixIcon: Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
+                          ),
+                        ),
+                        validator: _validateYear,
+                        keyboardType: TextInputType.number,
+                        autofillHints: [AutofillHints.birthdayYear],
+                      ),
+                      
+                      SizedBox(height: AppConstants.spacingMedium),
+                      
+                      // LABEL FIELD: Campo etichetta (su riga separata per mobile)
+                      TextFormField(
+                        key: Key('vinyl_label_field'),
+                        controller: _labelController,
+                        decoration: InputDecoration(
+                          labelText: 'Etichetta *',
+                          hintText: 'es. EMI, Sony',
+                          prefixIcon: Icon(Icons.business),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.borderRadius,
+                            ),
+                          ),
+                        ),
+                        validator: (value) => _validateRequired(value, 'Etichetta'),
+                        textCapitalization: TextCapitalization.words,
+                        autofillHints: [AutofillHints.organizationName],
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      // YEAR FIELD: Campo anno (in riga per tablet/desktop)
+                      Expanded(
+                        flex: 1,
+                        child: TextFormField(
+                          key: Key('vinyl_year_field'),
+                          controller: _yearController,
+                          decoration: InputDecoration(
+                            labelText: 'Anno *',
+                            hintText: 'es. 1975',
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                            ),
+                          ),
+                          validator: _validateYear,
+                          keyboardType: TextInputType.number,
+                          autofillHints: [AutofillHints.birthdayYear],
                         ),
                       ),
-                    ),
-                    validator: _validateYear,
-                    keyboardType: TextInputType.number,
-                    autofillHints: [AutofillHints.birthdayYear],
-                  ),
-                ),
 
-                SizedBox(width: AppConstants.spacingMedium),
+                      SizedBox(width: AppConstants.spacingMedium),
 
-                // LABEL FIELD: Campo etichetta
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    key: Key('vinyl_label_field'),
-                    controller: _labelController,
-                    decoration: InputDecoration(
-                      labelText: 'Etichetta *',
-                      hintText: 'es. EMI, Sony',
-                      prefixIcon: Icon(Icons.business),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.borderRadius,
+                      // LABEL FIELD: Campo etichetta (in riga per tablet/desktop)
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          key: Key('vinyl_label_field'),
+                          controller: _labelController,
+                          decoration: InputDecoration(
+                            labelText: 'Etichetta *',
+                            hintText: 'es. EMI, Sony',
+                            prefixIcon: Icon(Icons.business),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.borderRadius,
+                              ),
+                            ),
+                          ),
+                          validator: (value) => _validateRequired(value, 'Etichetta'),
+                          textCapitalization: TextCapitalization.words,
+                          autofillHints: [AutofillHints.organizationName],
                         ),
                       ),
-                    ),
-                    validator: (value) => _validateRequired(value, 'Etichetta'),
-                    textCapitalization: TextCapitalization.words,
-                    autofillHints: [AutofillHints.organizationName],
+                    ],
                   ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
