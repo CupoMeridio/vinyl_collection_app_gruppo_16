@@ -5,6 +5,9 @@ class Song {
   // ID univoco della canzone (auto-incrementale nel database)
   // Nullable perché viene assegnato dal database alla creazione
   int? id;
+
+//ID DEL VINILE (foreign key)
+  final int vinylId;
   
   // Titolo della canzone
   String titolo;
@@ -24,6 +27,7 @@ class Song {
   // Costruttore della classe Song
   Song({
     this.id,
+    required this.vinylId,
     required this.titolo,
     required this.artista,
     required this.anno,
@@ -35,6 +39,7 @@ class Song {
   factory Song.fromMap(Map<String, dynamic> map) {
     return Song(
       id: map['id'],
+      vinylId: map['vinylId'] as int, 
       titolo: map['titolo'],
       artista: map['artista'],
       anno: map['anno'],
@@ -47,6 +52,7 @@ class Song {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'vinylId': vinylId, 
       'titolo': titolo,
       'artista': artista,
       'anno': anno,
@@ -58,6 +64,7 @@ class Song {
   // Metodo per creare una copia della canzone con alcune modifiche
   Song copyWith({
     int? id,
+    int? vinylId,
     String? titolo,
     String? artista,
     int? anno,
@@ -66,6 +73,7 @@ class Song {
   }) {
     return Song(
       id: id ?? this.id,
+      vinylId: vinylId ?? this.vinylId, 
       titolo: titolo ?? this.titolo,
       artista: artista ?? this.artista,
       anno: anno ?? this.anno,
@@ -77,6 +85,6 @@ class Song {
   // Override del metodo toString per debug
   @override
   String toString() {
-    return 'Song{id: $id, titolo: $titolo, artista: $artista, anno: $anno}';
+    return 'Song{id: $id, vinylId: $vinylId, titolo: $titolo, artista: $artista, anno: $anno}';
   }
 }
