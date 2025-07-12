@@ -296,10 +296,6 @@ CREATE TABLE songs (
 - **Vinyl ↔ Song**: Relazione 1:N (un vinile, molte canzoni)
 - **Integrità Referenziale**: CASCADE DELETE per canzoni
 
-### Migrazioni
-- **Versione 1**: Schema iniziale
-- **Versione 2**: Aggiunta campo `isDefault` per categorie
-
 ---
 
 ## 🎨 Interfaccia Utente
