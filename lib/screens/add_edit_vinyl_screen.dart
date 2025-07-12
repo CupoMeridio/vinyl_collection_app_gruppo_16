@@ -8,6 +8,7 @@ import 'dart:io';
 
 // Import dei modelli e servizi necessari
 import '../models/vinyl.dart';
+import '../models/song_.dart';
 import '../services/vinyl_provider.dart';
 import '../services/database_service.dart';
 import '../utils/constants.dart';
@@ -19,9 +20,9 @@ import '../utils/constants.dart';
 class AddEditVinylScreen extends StatefulWidget {
   // Vinile da modificare (null per aggiunta nuovo)
   final Vinyl? vinyl;
-  
+
   const AddEditVinylScreen({super.key, this.vinyl});
-  
+
   @override
   State<AddEditVinylScreen> createState() => _AddEditVinylScreenState();
 }
@@ -30,7 +31,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
   // === FORM MANAGEMENT ===
   // PATTERN: Form Key per validazione centralizzata
   final _formKey = GlobalKey<FormState>();
-  
+
   // === CONTROLLERS PER INPUT FIELDS ===
   // MEMORY MANAGEMENT: Controllori per gestire input utente
   late TextEditingController _titleController;
@@ -38,28 +39,40 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
   late TextEditingController _yearController;
   late TextEditingController _labelController;
   late TextEditingController _notesController;
-  
+
   // === STATO FORM ===
   // DROPDOWN VALUES: Valori selezionati per dropdown
-  String _selectedGenre = 'Rock'; // Valore di default, verrà aggiornato da _loadAvailableGenres
+  String _selectedGenre =
+      'Rock'; // Valore di default, verrà aggiornato da _loadAvailableGenres
   String _selectedCondition = AppConstants.vinylConditions.first;
   bool _isFavorite = false;
-  
+
   // === GENRE MANAGEMENT ===
   // Lista completa di generi (predefiniti + personalizzati)
   List<String> _availableGenres = [];
   final DatabaseService _databaseService = DatabaseService();
-  
+
   // === IMAGE MANAGEMENT ===
   // PATTERN: File Strategy per gestione immagini
   File? _selectedImage;
   String? _existingImagePath;
   final ImagePicker _imagePicker = ImagePicker();
-  
+
   // === LOADING STATE ===
   // UX: Indicatore di caricamento per operazioni async
   bool _isLoading = false;
-  
+
+  // === CONTROLLERS PER CANZONI ===
+  // Liste di controllori per gestire dinamicamente i campi delle canzoni
+  final List<TextEditingController> _songTitleControllers = [];
+  final List<TextEditingController> _songArtistControllers = [];
+  final List<TextEditingController> _songYearControllers = [];
+  final List<TextEditingController> _songTrackNumberControllers = [];
+  final List<TextEditingController> _songDurationControllers = [];
+
+  // Lista temporanea di oggetti Song per mantenere gli ID delle canzoni esistenti
+  List<Song> _songsToSave = [];
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +80,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     _loadAvailableGenres();
     _loadExistingData();
   }
-  
+
   // === INITIALIZATION: Setup controllori ===
   // PATTERN: Lazy Initialization per performance
   void _initializeControllers() {
@@ -77,16 +90,16 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     _labelController = TextEditingController();
     _notesController = TextEditingController();
   }
-  
+
   // === GENRE LOADING: Caricamento generi disponibili ===
   Future<void> _loadAvailableGenres() async {
     try {
       // Ottieni tutte le categorie dal database (predefinite + personalizzate)
       final categories = await _databaseService.getAllCategories();
-      
+
       // Estrai i nomi delle categorie
       _availableGenres = categories.map((category) => category.name).toList();
-      
+
       setState(() {
         // Assicurati che il genere selezionato sia nella lista
         if (!_availableGenres.contains(_selectedGenre)) {
@@ -106,7 +119,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       });
     }
   }
-  
+
   // === DATA LOADING: Carica dati esistenti per modifica ===
   // CONDITIONAL LOGIC: Popola form solo se in modalità modifica
   void _loadExistingData() {
@@ -117,7 +130,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       _yearController.text = vinyl.year.toString();
       _labelController.text = vinyl.label;
       _notesController.text = vinyl.notes ?? '';
-      
+
       // GENRE HANDLING: Gestione genere con controllo disponibilità
       if (_availableGenres.contains(vinyl.genre)) {
         _selectedGenre = vinyl.genre;
@@ -127,13 +140,35 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
         _availableGenres.sort();
         _selectedGenre = vinyl.genre;
       }
-      
+
       _selectedCondition = vinyl.condition;
       _isFavorite = vinyl.isFavorite;
       _existingImagePath = vinyl.imagePath;
+
+      // === CARICA CANZONI ESISTENTI ===
+      if (vinyl.song != null && vinyl.song!.isNotEmpty) {
+        for (var song in vinyl.song!) {
+          _songsToSave.add(
+            song,
+          ); // Aggiungi la canzone all'elenco da salvare per mantenere l'ID
+          _songTitleControllers.add(TextEditingController(text: song.titolo));
+          _songArtistControllers.add(TextEditingController(text: song.artista));
+          _songYearControllers.add(
+            TextEditingController(text: song.anno.toString()),
+          );
+          _songTrackNumberControllers.add(
+            TextEditingController(text: song.trackNumber?.toString() ?? ''),
+          );
+          _songDurationControllers.add(
+            TextEditingController(text: song.duration ?? ''),
+          );
+        }
+      }
+    } else {
+      _addSongField();
     }
   }
-  
+
   @override
   void dispose() {
     // MEMORY MANAGEMENT: Cleanup controllori per evitare memory leaks
@@ -144,18 +179,66 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     _notesController.dispose();
     super.dispose();
   }
-  
+
+  void _addSongField() {
+    setState(() {
+      _songTitleControllers.add(TextEditingController());
+      // Pre-compila artista e anno con quelli del vinile come default
+      _songArtistControllers.add(
+        TextEditingController(text: _artistController.text),
+      );
+      _songYearControllers.add(
+        TextEditingController(text: _yearController.text),
+      );
+      _songTrackNumberControllers.add(
+        TextEditingController(
+          text: (_songTrackNumberControllers.length + 1).toString(),
+        ),
+      );
+      _songDurationControllers.add(TextEditingController());
+     
+      _songsToSave.add(
+        Song(
+          id: null, //  null per le nuove canzoni
+          vinylId:
+              widget.vinyl?.id ??
+              0, // Placeholder, sarà corretto al salvataggio nel DB
+          titolo: '',
+          artista: _artistController.text,
+          anno: int.tryParse(_yearController.text) ?? DateTime.now().year,
+        ),
+      );
+    });
+  }
+
+  void _removeSongField(int index) {
+    setState(() {
+      _songTitleControllers[index].dispose();
+      _songArtistControllers[index].dispose();
+      _songYearControllers[index].dispose();
+      _songTrackNumberControllers[index].dispose();
+      _songDurationControllers[index].dispose();
+
+      _songTitleControllers.removeAt(index);
+      _songArtistControllers.removeAt(index);
+      _songYearControllers.removeAt(index);
+      _songTrackNumberControllers.removeAt(index);
+      _songDurationControllers.removeAt(index);
+      _songsToSave.removeAt(index); 
+    });
+  }
+
   // === IMAGE SELECTION: Gestione selezione immagine ===
   // PATTERN: Strategy Pattern per diverse sorgenti immagine
   Future<void> _selectImage() async {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,  // OPTIMIZATION: Riduce dimensione per performance
+        maxWidth: 800, // OPTIMIZATION: Riduce dimensione per performance
         maxHeight: 800,
         imageQuality: 85, // COMPRESSION: Bilancia qualità e dimensione
       );
-      
+
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
@@ -166,7 +249,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       _showErrorSnackBar('Errore nella selezione dell\'immagine: $e');
     }
   }
-  
+
   // === FORM VALIDATION: Validazione campi obbligatori ===
   // PATTERN: Validation Strategy per input sicuri
   String? _validateRequired(String? value, String fieldName) {
@@ -175,26 +258,26 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     }
     return null;
   }
-  
+
   // === YEAR VALIDATION: Validazione specifica per anno ===
   String? _validateYear(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Anno è obbligatorio';
     }
-    
+
     final year = int.tryParse(value);
     if (year == null) {
       return 'Inserisci un anno valido';
     }
-    
+
     final currentYear = DateTime.now().year;
     if (year < 1900 || year > currentYear) {
       return 'Anno deve essere tra 1900 e $currentYear';
     }
-    
+
     return null;
   }
-  
+
   // === SAVE OPERATION: Salvataggio vinile ===
   // PATTERN: Command Pattern per operazioni CRUD
   // ASYNC: Operazione asincrona con feedback UX
@@ -202,12 +285,44 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
     if (!_formKey.currentState!.validate()) {
       return; // EARLY RETURN: Esce se validazione fallisce
     }
-    
+
+    // Valida i titoli delle canzoni
+    for (int i = 0; i < _songTitleControllers.length; i++) {
+      if (_songTitleControllers[i].text.trim().isEmpty) {
+        _showErrorSnackBar(
+          'Il titolo della canzone ${i + 1} non può essere vuoto.',
+        );
+        return; // Impedisce il salvataggio se una canzone ha titolo vuoto
+      }
+    }
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
+      // Costruisci la lista di canzoni finali dai controller
+      List<Song> finalSongs = [];
+      for (int i = 0; i < _songTitleControllers.length; i++) {
+        finalSongs.add(
+          Song(
+            id: _songsToSave[i]
+                .id, // Mantiene l'ID se esistente per l'aggiornamento
+            vinylId:
+                widget.vinyl?.id ??
+                0, // Placeholder, sarà assegnato al salvataggio nel DB
+            titolo: _songTitleControllers[i].text.trim(),
+            artista: _songArtistControllers[i].text.trim(),
+            anno: int.tryParse(_songYearControllers[i].text.trim()) ?? 0,
+            trackNumber: int.tryParse(
+              _songTrackNumberControllers[i].text.trim(),
+            ),
+            duration: _songDurationControllers[i].text.trim().isEmpty
+                ? null
+                : _songDurationControllers[i].text.trim(),
+          ),
+        );
+      }
       // BUSINESS LOGIC: Crea oggetto Vinyl dai dati form
       final vinyl = Vinyl(
         id: widget.vinyl?.id, // Mantiene ID per modifica, null per nuovo
@@ -220,40 +335,41 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
         isFavorite: _isFavorite,
         imagePath: _selectedImage?.path ?? _existingImagePath,
         dateAdded: widget.vinyl?.dateAdded ?? DateTime.now(),
-        notes: _notesController.text.trim().isEmpty 
-            ? null 
+        notes: _notesController.text.trim().isEmpty
+            ? null
             : _notesController.text.trim(),
+        song: finalSongs,
       );
-      
+
       // PROVIDER PATTERN: Delega operazione al provider
       final provider = Provider.of<VinylProvider>(context, listen: false);
       bool success;
-      
+
       if (widget.vinyl == null) {
         // OPERATION: Aggiunta nuovo vinile
         success = await provider.addVinyl(vinyl);
       } else {
         // OPERATION: Modifica vinile esistente
         success = await provider.updateVinyl(vinyl);
-        widget.vinyl?.artist   = vinyl.artist; // Aggiorna artista
-        widget.vinyl?.title    = vinyl.title; // Aggiorna titolo
-        widget.vinyl?.year     = vinyl.year; // Aggiorna anno     
-        widget.vinyl?.genre    = vinyl.genre; // Aggiorna genere
-        widget.vinyl?.label    = vinyl.label; // Aggiorna etichetta     
+        widget.vinyl?.artist = vinyl.artist; // Aggiorna artista
+        widget.vinyl?.title = vinyl.title; // Aggiorna titolo
+        widget.vinyl?.year = vinyl.year; // Aggiorna anno
+        widget.vinyl?.genre = vinyl.genre; // Aggiorna genere
+        widget.vinyl?.label = vinyl.label; // Aggiorna etichetta
         widget.vinyl?.condition = vinyl.condition; // Aggiorna condizione
-        widget.vinyl?.isFavorite = vinyl.isFavorite; // Aggiorna preferito    
+        widget.vinyl?.isFavorite = vinyl.isFavorite; // Aggiorna preferito
         widget.vinyl?.imagePath = vinyl.imagePath; // Aggiorna immagine
-        widget.vinyl?.notes    = vinyl.notes; // Aggiorna note
-       widget.vinyl?.dateAdded = vinyl.dateAdded; // Aggiorna data aggiunta 
-         // NOTA: Non è necessario aggiornare l'ID, viene mantenuto quello esistente  
+        widget.vinyl?.notes = vinyl.notes; // Aggiorna note
+        widget.vinyl?.dateAdded = vinyl.dateAdded; // Aggiorna data aggiunta
+        // NOTA: Non è necessario aggiornare l'ID, viene mantenuto quello esistente
       }
-      
+
       if (success) {
         // SUCCESS FEEDBACK: Notifica successo e torna indietro
         _showSuccessSnackBar(
-          widget.vinyl == null 
-              ? 'Vinile aggiunto con successo!' 
-              : 'Vinile modificato con successo!'
+          widget.vinyl == null
+              ? 'Vinile aggiunto con successo!'
+              : 'Vinile modificato con successo!',
         );
         if (mounted) {
           Navigator.of(context).pop(true); // Ritorna true per indicare successo
@@ -271,7 +387,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       });
     }
   }
-  
+
   // === UI FEEDBACK: Metodi per notifiche utente ===
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -282,7 +398,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -292,7 +408,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -315,7 +431,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             ),
         ],
       ),
-      
+
       // === BODY: Form principale ===
       body: _isLoading
           ? Center(
@@ -323,16 +439,11 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    color: AppConstants.primaryColor,
-                  ),
+                  CircularProgressIndicator(color: AppConstants.primaryColor),
                   SizedBox(height: AppConstants.spacingMedium),
                   Text(
                     'Salvataggio in corso...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -348,19 +459,24 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                     // === IMAGE SECTION: Gestione immagine copertina ===
                     _buildImageSection(),
                     SizedBox(height: AppConstants.spacingLarge),
-                    
+
                     // === BASIC INFO: Informazioni base ===
                     _buildBasicInfoSection(),
                     SizedBox(height: AppConstants.spacingLarge),
-                    
+
                     // === DETAILS: Dettagli aggiuntivi ===
                     _buildDetailsSection(),
                     SizedBox(height: AppConstants.spacingLarge),
-                    
+
+                    // === SONGS SECTION: Sezione per la gestione delle canzoni ===
+                    _buildSongsSection(),
+                    const SizedBox(
+                      height: AppConstants.paddingLarge,
+                    ), // Usare le costanti
                     // === NOTES: Note opzionali ===
                     _buildNotesSection(),
                     SizedBox(height: AppConstants.spacingLarge),
-                    
+
                     // === SAVE BUTTON: Pulsante salva principale ===
                     _buildSaveButton(),
                   ],
@@ -369,7 +485,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
             ),
     );
   }
-  
+
   // === IMAGE SECTION: Widget per gestione immagine ===
   Widget _buildImageSection() {
     return Card(
@@ -390,7 +506,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
             ),
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // IMAGE DISPLAY: Mostra immagine selezionata o placeholder
             Container(
               height: 200,
@@ -402,28 +518,29 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
               child: _selectedImage != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                      child: Image.file(
-                        _selectedImage!,
-                        fit: BoxFit.cover,
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.borderRadius,
                       ),
+                      child: Image.file(_selectedImage!, fit: BoxFit.cover),
                     )
                   : _existingImagePath != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                          child: Image.file(
-                            File(_existingImagePath!),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildImagePlaceholder();
-                            },
-                          ),
-                        )
-                      : _buildImagePlaceholder(),
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.borderRadius,
+                      ),
+                      child: Image.file(
+                        File(_existingImagePath!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildImagePlaceholder();
+                        },
+                      ),
+                    )
+                  : _buildImagePlaceholder(),
             ),
-            
+
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // IMAGE ACTIONS: Pulsanti per gestione immagine
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -459,29 +576,22 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
   // === IMAGE PLACEHOLDER: Widget placeholder per immagine ===
   Widget _buildImagePlaceholder() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.album,
-          size: 64,
-          color: Colors.grey[400],
-        ),
+        Icon(Icons.album, size: 64, color: Colors.grey[400]),
         SizedBox(height: AppConstants.spacingSmall),
         Text(
           'Nessuna immagine',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
       ],
     );
   }
-  
+
   // === BASIC INFO SECTION: Campi informazioni base ===
   Widget _buildBasicInfoSection() {
     return Card(
@@ -503,7 +613,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
             ),
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // TITLE FIELD: Campo titolo
             TextFormField(
               key: Key('vinyl_title_field'),
@@ -513,16 +623,18 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 hintText: 'Inserisci il titolo dell\'album',
                 prefixIcon: Icon(Icons.album),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
               ),
               validator: (value) => _validateRequired(value, 'Titolo'),
               textCapitalization: TextCapitalization.words,
               autofillHints: [AutofillHints.name],
             ),
-            
+
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // ARTIST FIELD: Campo artista
             TextFormField(
               key: Key('vinyl_artist_field'),
@@ -532,16 +644,18 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 hintText: 'Inserisci il nome dell\'artista',
                 prefixIcon: Icon(Icons.person),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
               ),
               validator: (value) => _validateRequired(value, 'Artista'),
               textCapitalization: TextCapitalization.words,
               autofillHints: [AutofillHints.givenName],
             ),
-            
+
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // YEAR AND LABEL ROW: Anno e etichetta in riga
             Row(
               children: [
@@ -556,7 +670,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                       hintText: 'es. 1975',
                       prefixIcon: Icon(Icons.calendar_today),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
                       ),
                     ),
                     validator: _validateYear,
@@ -564,9 +680,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                     autofillHints: [AutofillHints.birthdayYear],
                   ),
                 ),
-                
+
                 SizedBox(width: AppConstants.spacingMedium),
-                
+
                 // LABEL FIELD: Campo etichetta
                 Expanded(
                   flex: 2,
@@ -578,7 +694,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                       hintText: 'es. EMI, Sony',
                       prefixIcon: Icon(Icons.business),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.borderRadius,
+                        ),
                       ),
                     ),
                     validator: (value) => _validateRequired(value, 'Etichetta'),
@@ -593,7 +711,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
   // === DETAILS SECTION: Sezione dettagli ===
   Widget _buildDetailsSection() {
     return Card(
@@ -615,7 +733,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
             ),
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // GENRE DROPDOWN: Selezione genere
             DropdownButtonFormField<String>(
               key: Key('vinyl_genre_field'),
@@ -624,14 +742,13 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 labelText: 'Genere',
                 prefixIcon: Icon(Icons.music_note),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
               ),
               items: _availableGenres.map((genre) {
-                return DropdownMenuItem(
-                  value: genre,
-                  child: Text(genre),
-                );
+                return DropdownMenuItem(value: genre, child: Text(genre));
               }).toList(),
               onChanged: (value) {
                 setState(() {
@@ -639,9 +756,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 });
               },
             ),
-            
+
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // CONDITION DROPDOWN: Selezione condizione
             DropdownButtonFormField<String>(
               key: Key('vinyl_condition_field'),
@@ -650,7 +767,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 labelText: 'Condizione',
                 prefixIcon: Icon(Icons.star),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
               ),
               items: AppConstants.vinylConditions.map((condition) {
@@ -665,9 +784,9 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                 });
               },
             ),
-            
+
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // FAVORITE SWITCH: Toggle preferito
             SwitchListTile(
               title: Text(
@@ -692,7 +811,156 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
+  // === SONGS SECTION: Widget per la gestione delle canzoni ===
+  Widget _buildSongsSection() {
+    return Card(
+      elevation: AppConstants.cardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.paddingMedium),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Canzoni',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppConstants.primaryColor,
+              ),
+            ),
+            const SizedBox(height: AppConstants.paddingSmall),
+            ListView.builder(
+              shrinkWrap:
+                  true, // Importante per ListView annidati in SingleChildScrollView
+              physics:
+                  const NeverScrollableScrollPhysics(), // Per disabilitare lo scroll del ListView
+              itemCount: _songTitleControllers.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: AppConstants.paddingMedium,
+                  ),
+                  child: Card(
+                    // Wrap each song in a Card for better visual separation
+                    margin: EdgeInsets.zero,
+                    elevation:
+                        AppConstants.cardElevation /
+                        2, // Meno elevazione delle card principali
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Canzone ${index + 1}',
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              if (_songTitleControllers.length >
+                                  1) // Non permettere di eliminare l'unica canzone
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _removeSongField(index),
+                                ),
+                            ],
+                          ),
+                          TextFormField(
+                            controller: _songTitleControllers[index],
+                            decoration: const InputDecoration(
+                              labelText: 'Titolo Canzone',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Inserisci un titolo per la canzone';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.paddingSmall),
+                          TextFormField(
+                            controller: _songArtistControllers[index],
+                            decoration: const InputDecoration(
+                              labelText: 'Artista Canzone (opzionale)',
+                            ),
+                          ),
+                          const SizedBox(height: AppConstants.paddingSmall),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _songYearControllers[index],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Anno Canzone (opzionale)',
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: AppConstants.paddingSmall),
+                              Expanded(
+                                child: TextFormField(
+                                  controller:
+                                      _songTrackNumberControllers[index],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Traccia # (opzionale)',
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: AppConstants.paddingSmall),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _songDurationControllers[index],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Durata (MM:SS) (opzionale)',
+                                  ),
+                                  keyboardType: TextInputType.datetime,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: _addSongField,
+                icon: const Icon(Icons.add, color: AppConstants.accentColor),
+                label: Text(
+                  'Aggiungi Canzone',
+                  style: TextStyle(color: AppConstants.accentColor),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppConstants.accentColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.paddingMedium,
+                    vertical: AppConstants.paddingSmall,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // === NOTES SECTION: Sezione note ===
   Widget _buildNotesSection() {
     return Card(
@@ -714,17 +982,20 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
               ),
             ),
             SizedBox(height: AppConstants.spacingMedium),
-            
+
             // NOTES FIELD: Campo note multilinea
             TextFormField(
               key: Key('vinyl_notes_field'),
               controller: _notesController,
               decoration: InputDecoration(
                 labelText: 'Note (opzionale)',
-                hintText: 'Aggiungi note personali, ricordi o dettagli tecnici...',
+                hintText:
+                    'Aggiungi note personali, ricordi o dettagli tecnici...',
                 prefixIcon: Icon(Icons.note),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                 ),
                 alignLabelWithHint: true,
               ),
@@ -737,21 +1008,15 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       ),
     );
   }
-  
+
   // === SAVE BUTTON: Pulsante salva principale ===
   Widget _buildSaveButton() {
     return ElevatedButton.icon(
       onPressed: _isLoading ? null : _saveVinyl,
-      icon: Icon(
-        widget.vinyl == null ? Icons.add : Icons.save,
-        size: 24,
-      ),
+      icon: Icon(widget.vinyl == null ? Icons.add : Icons.save, size: 24),
       label: Text(
         widget.vinyl == null ? 'Aggiungi Vinile' : 'Salva Modifiche',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppConstants.primaryColor,
