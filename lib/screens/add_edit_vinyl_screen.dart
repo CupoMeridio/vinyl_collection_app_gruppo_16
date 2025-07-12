@@ -164,9 +164,8 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
           );
         }
       }
-    } else {
-      _addSongField();
     }
+    // Non aggiungere automaticamente una canzone per i nuovi vinili
   }
 
   @override
@@ -286,7 +285,7 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
       return; // EARLY RETURN: Esce se validazione fallisce
     }
 
-    // Valida i titoli delle canzoni
+    // Valida i titoli delle canzoni solo se ci sono canzoni aggiunte
     for (int i = 0; i < _songTitleControllers.length; i++) {
       if (_songTitleControllers[i].text.trim().isEmpty) {
         _showErrorSnackBar(
@@ -825,44 +824,77 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Canzoni',
+              'Canzoni (opzionale)',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: AppConstants.primaryColor,
               ),
             ),
             const SizedBox(height: AppConstants.paddingSmall),
-            ListView.builder(
-              shrinkWrap:
-                  true, // Importante per ListView annidati in SingleChildScrollView
-              physics:
-                  const NeverScrollableScrollPhysics(), // Per disabilitare lo scroll del ListView
-              itemCount: _songTitleControllers.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AppConstants.paddingMedium,
+            if (_songTitleControllers.isEmpty)
+              // Mostra messaggio quando non ci sono canzoni
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppConstants.paddingMedium),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.music_note_outlined,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: AppConstants.paddingSmall),
+                      Text(
+                        'Nessuna canzone aggiunta',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.paddingSmall),
+                      Text(
+                        'Aggiungi le canzoni del vinile per tenere traccia della tracklist',
+                        style: TextStyle(
+                          color: Colors.grey[500],
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                  child: Card(
-                    // Wrap each song in a Card for better visual separation
-                    margin: EdgeInsets.zero,
-                    elevation:
-                        AppConstants.cardElevation /
-                        2, // Meno elevazione delle card principali
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.paddingMedium),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Canzone ${index + 1}',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              if (_songTitleControllers.length >
-                                  1) // Non permettere di eliminare l'unica canzone
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap:
+                    true, // Importante per ListView annidati in SingleChildScrollView
+                physics:
+                    const NeverScrollableScrollPhysics(), // Per disabilitare lo scroll del ListView
+                itemCount: _songTitleControllers.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: AppConstants.paddingMedium,
+                    ),
+                    child: Card(
+                      // Wrap each song in a Card for better visual separation
+                      margin: EdgeInsets.zero,
+                      elevation:
+                          AppConstants.cardElevation /
+                          2, // Meno elevazione delle card principali
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Canzone ${index + 1}',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                // Ora è sempre possibile rimuovere le canzoni
                                 IconButton(
                                   icon: const Icon(
                                     Icons.delete_forever,
@@ -870,8 +902,8 @@ class _AddEditVinylScreenState extends State<AddEditVinylScreen> {
                                   ),
                                   onPressed: () => _removeSongField(index),
                                 ),
-                            ],
-                          ),
+                              ],
+                            ),
                           TextFormField(
                             controller: _songTitleControllers[index],
                             decoration: const InputDecoration(
