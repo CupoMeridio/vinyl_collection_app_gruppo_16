@@ -6,7 +6,7 @@ import '../services/vinyl_provider.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
-buildEmptyState(String title, String subtitle, IconData icon) {
+Widget buildEmptyState(String title, String subtitle, IconData icon) {
     return SizedBox(
       height: 120,
       child: Center(
@@ -120,7 +120,7 @@ Widget _buildImagePlaceholder() {
   }
 
 // widget per visualizzare un vinile, con o senza copertina
-Widget buildVinylCard(vinyl, BuildContext context) {
+Widget buildVinylCard(Vinyl vinyl, BuildContext context) {
     return GestureDetector(
       onTap: () async {
         // NAVIGATION: Naviga alla schermata dettaglio vinile
