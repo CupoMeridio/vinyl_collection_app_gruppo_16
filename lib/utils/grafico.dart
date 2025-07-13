@@ -119,9 +119,9 @@ class GraficoALinee extends StatelessWidget {
                   sideTitles: SideTitles(showTitles: false),
                   axisNameWidget: Text(
                     'Numero di Vinili',
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.left,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
