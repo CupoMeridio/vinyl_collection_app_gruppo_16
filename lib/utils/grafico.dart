@@ -1,36 +1,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';
+import 'package:provider/provider.dart';
+import 'package:vinyl_collection_app_gruppo_16/services/vinyl_provider.dart';
 import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
 
 
 class GraficoATorta extends StatelessWidget {
     final Map<String, Color> generiColori;
-    final DatabaseService db = DatabaseService();
 
-    GraficoATorta(
+    const GraficoATorta(
     this.generiColori, {super.key}
   );
 
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        db.getGenreDistribution(),
-        db.getTotalVinylCount(),
-      ]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator( color: Colors.blue,));
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(child: Text('Errore nel caricamento dei dati'));
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
         }
 
-        final Map<String, int> generiDistribution = snapshot.data![0] as Map<String, int>;
-        final int totaleVinili = snapshot.data![1] as int;
+        final Map<String, int> generiDistribution = provider.genreDistribution;
+        final int totaleVinili = provider.totalVinyls;
         final List<String> generi = generiDistribution.keys.toList();
         
         // Gestione stato vuoto quando non ci sono vinili
@@ -122,7 +115,6 @@ class ScritteRuotate extends StatelessWidget {
   }
 }
 class GraficoALinee extends StatelessWidget {
-  final DatabaseService db = DatabaseService();
   late final String anno; // Anno di default per il grafico
 
   GraficoALinee({super.key, String? anno}) {
@@ -132,17 +124,13 @@ class GraficoALinee extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  FutureBuilder<Map<int, Map<int, List<Vinyl>>>>(
-      future: db.getVinylsByYearAndMonth(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator(color: Colors.blue));
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(child: Text('Errore nel caricamento dei dati'));
-        }
-        final Map<int, Map<int, List<Vinyl>>> distribuzionePerAnno =
-            snapshot.data as Map<int, Map<int, List<Vinyl>>>;
+        
+        final Map<int, Map<int, List<Vinyl>>> distribuzionePerAnno = provider.vinylsByYearAndMonth;
         
         // Verifica se ci sono dati per l'anno selezionato
         final Map<int, List<Vinyl>>? datiAnno = distribuzionePerAnno[int.parse(anno)];

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import '../services/vinyl_provider.dart';
-import '../models/vinyl.dart';
-import 'dart:io';
+
+import '../widgets/vinyl_card.dart';
+
 
 class SearchView extends StatefulWidget {
   final String? initialFilter;
@@ -123,7 +124,10 @@ class _SearchViewState extends State<SearchView> {
                   itemCount: vinyls.length,
                   itemBuilder: (context, index) {
                     final vinyl = vinyls[index];
-                    return _buildVinylCard(vinyl);
+                    return VinylCard(
+                      vinyl: vinyl,
+                      type: VinylCardType.horizontal,
+                    );
                   },
                 );
               },
@@ -134,174 +138,7 @@ class _SearchViewState extends State<SearchView> {
     );
   }
 
-  Widget _buildVinylCard(Vinyl vinyl) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/DettaglioVinile',
-            arguments: vinyl,
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Immagine copertina
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: AppConstants.primaryColor.withValues(alpha: 26),
-                ),
-                child: vinyl.imagePath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(vinyl.imagePath!),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildImagePlaceholder();
-                          },
-                        ),
-                      )
-                    : _buildImagePlaceholder(),
-              ),
-              const SizedBox(width: 16),
-              // Informazioni vinile
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vinyl.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vinyl.artist,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          vinyl.year.toString(),
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Icon(
-                          Icons.business,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            vinyl.label,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getConditionColor(vinyl.condition),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            vinyl.condition,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (vinyl.isFavorite)
-                          Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildImagePlaceholder() {
-    return Center(
-      child: Icon(
-        Icons.album,
-        color: AppConstants.primaryColor.withValues(alpha: 128),
-        size: 32,
-      ),
-    );
-  }
-
-  Color _getConditionColor(String condition) {
-    switch (condition) {
-      case 'Nuovo':
-        return Colors.green[700]!;
-      case 'Ottimo':
-        return Colors.green[600]!;
-      case 'Buono':
-        return Colors.orange[700]!;
-      case 'Discreto':
-        return Colors.deepOrange[700]!;
-      case 'Da restaurare':
-        return Colors.red[700]!;
-      default:
-        return Colors.grey[700]!;
-    }
-  }
 
   List<dynamic> _getFilteredVinyls(VinylProvider provider) {
     // Usa sempre filteredVinyls che contiene la logica di filtraggio combinata

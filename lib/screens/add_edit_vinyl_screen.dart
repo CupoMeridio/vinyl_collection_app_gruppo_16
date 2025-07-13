@@ -14,7 +14,7 @@ import '../models/song_.dart';
 import '../services/vinyl_provider.dart';
 import '../services/database_service.dart';
 import '../utils/constants.dart';
-import '../utils/schermo_adattivo.dart';
+
 
 // === SCHERMATA AGGIUNTA/MODIFICA VINILE ===
 // PATTERN: Form Validation Strategy per input sicuri

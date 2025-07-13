@@ -695,6 +695,28 @@ class VinylProvider with ChangeNotifier {
     return sorted.take(5).toList();
   }
 
+  // YEAR AND MONTH DISTRIBUTION: Distribuzione vinili per anno e mese
+  // ALGORITHM: Nested grouping per analisi temporale dettagliata
+  Map<int, Map<int, List<Vinyl>>> get vinylsByYearAndMonth {
+    Map<int, Map<int, List<Vinyl>>> distribution = {};
+    
+    for (var vinyl in _vinyls) {
+      int year = vinyl.dateAdded.year;
+      int month = vinyl.dateAdded.month;
+      
+      // Inizializza l'anno se non esiste
+      distribution[year] ??= {};
+      
+      // Inizializza il mese se non esiste
+      distribution[year]![month] ??= [];
+      
+      // Aggiungi il vinile al mese corrispondente
+      distribution[year]![month]!.add(vinyl);
+    }
+    
+    return distribution;
+  }
+
   // === CACHE MANAGEMENT ===
   // PATTERN: Cache Invalidation per performance ottimizzate
   // MOTIVAZIONE: Invalida cache computate quando i dati cambiano

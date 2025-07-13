@@ -4,7 +4,7 @@ import '../utils/constants.dart';
 import '../services/vinyl_provider.dart';
 
 import 'package:provider/provider.dart';
-import 'dart:io';
+import '../widgets/vinyl_card.dart';
 
 Widget buildEmptyState(String title, String subtitle, IconData icon) {
     return SizedBox(
@@ -98,7 +98,10 @@ Widget buildFavoriteVinylsSection(BuildContext context) {
                       SizedBox(width: AppConstants.spacingMedium),
                   itemBuilder: (context, index) {
                     final vinyl = favoriteVinyls[index];
-                    return buildVinylCard(vinyl, context);
+                    return VinylCard(
+                      vinyl: vinyl,
+                      type: VinylCardType.verticalCompact,
+                    );
                   },
                 ),
               ),
@@ -108,127 +111,9 @@ Widget buildFavoriteVinylsSection(BuildContext context) {
     );
   }
 
-// immagine segnaposto per i vinili senza copertina
-Widget _buildImagePlaceholder() {
-    return Center(
-      child: Icon(
-        Icons.album,
-        color: AppConstants.primaryColor.withValues(alpha: 0.5),
-        size: 40,
-      ),
-    );
-  }
 
-// widget per visualizzare un vinile, con o senza copertina
-Widget buildVinylCard(Vinyl vinyl, BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        // NAVIGATION: Naviga alla schermata dettaglio vinile
-        await Navigator.pushNamed(
-          context,
-          '/DettaglioVinile',
-          arguments: vinyl,
-        );
-      },
-      child: Container(
-        width: 120,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Immagine con copertina
-            Container(
-              height: 100,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppConstants.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(AppConstants.borderRadius),
-                ),
-              ),
-              child: vinyl.imagePath != null
-              // da un bordo rettangolare al vinile
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(AppConstants.borderRadius),
-                      ),
-                      child: Image.file(
-                        File(vinyl.imagePath!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildImagePlaceholder();
-                        },
-                      ),
-                    )
-                    // immagine senza copertina
-                  : _buildImagePlaceholder(),
-            ),
-            
-            // INFO: Informazioni vinile
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(AppConstants.paddingSmall),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vinyl.title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      vinyl.artist,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 10,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          vinyl.year.toString(),
-                          style: TextStyle(
-                            color: AppConstants.primaryColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (vinyl.isFavorite)
-                          Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                            size: 12,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
+
 
 // card per le statistiche
 Widget buildStatCard(String title, String value, IconData icon, Color color) {
@@ -315,7 +200,10 @@ Widget buildSection(String title, String missingPhrase, String missingSubtitle, 
                             SizedBox(width: AppConstants.spacingMedium),
                         itemBuilder: (context, index) {
                           final vinyl = list[index];
-                          return buildVinylCard(vinyl, context);
+                          return VinylCard(
+                            vinyl: vinyl,
+                            type: VinylCardType.verticalCompact,
+                          );
                         }
                       ),
                     ),

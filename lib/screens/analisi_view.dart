@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constants.dart';
-import '../services/database_service.dart';
 import '../models/section.dart';
 import '../models/vinyl.dart';
 
@@ -59,17 +58,13 @@ class Analisi extends StatelessWidget {
                              child: SizedBox(
                                width: 280,
                                height: 200,
-                              child: FutureBuilder<Map<String, int>>(
-                                future: DatabaseService().getGenreDistribution(),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState != ConnectionState.done) {
+                              child: Consumer<VinylProvider>(
+                                builder: (context, provider, child) {
+                                  if (provider.isLoading) {
                                     return const Center(child: CircularProgressIndicator());
                                   }
-                                  if (snapshot.hasError || !snapshot.hasData) {
-                                    return const Center(child: Text('Errore caricamento'));
-                                  }
                                   
-                                  final generi = snapshot.data!.keys.toList();
+                                  final generi = provider.genreDistribution.keys.toList();
                                   
                                   if (generi.isEmpty) {
                                     return Center(
@@ -160,17 +155,13 @@ class Analisi extends StatelessWidget {
                             child: SizedBox(
                               width: 150,
                               height: 180,
-                              child: FutureBuilder<Map<String, int>>(
-                                future: DatabaseService().getGenreDistribution(),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState != ConnectionState.done) {
+                              child: Consumer<VinylProvider>(
+                                builder: (context, provider, child) {
+                                  if (provider.isLoading) {
                                     return const Center(child: CircularProgressIndicator());
                                   }
-                                  if (snapshot.hasError || !snapshot.hasData) {
-                                    return const Center(child: Text('Errore caricamento'));
-                                  }
                                   
-                                  final generi = snapshot.data!.keys.toList();
+                                  final generi = provider.genreDistribution.keys.toList();
                                   
                                   if (generi.isEmpty) {
                                     return Center(
@@ -307,17 +298,17 @@ class ViniliPiuVecchi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Vinyl>>(
-      future: DatabaseService().getOldestVinyls(limit:5),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator( color: Colors.blue,));
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(child: Text('Errore nel caricamento dei dati'));
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
         }
 
-        final List<dynamic> vinili = snapshot.data!;
+        // Ottieni i 5 vinili più vecchi dal provider
+        final allVinyls = List<Vinyl>.from(provider.vinyls);
+        allVinyls.sort((a, b) => a.year.compareTo(b.year));
+        final oldestVinyls = allVinyls.take(5).toList();
+
         return buildSection(
           'I 5 Vinili più Vecchi',
           'Nessun vinile aggiunto di recente',
@@ -325,10 +316,9 @@ class ViniliPiuVecchi extends StatelessWidget {
           Icons.album,
           Icons.music_note,
           null, // No navigation for this section
-          vinili.cast<Vinyl>(), // Cast to List<Vinyl>
+          oldestVinyls,
           context,
         );
-        //Widget buildSection(String title, String missingPhrase, String missingSubtitle, IconData mainIcon, IconData emptyIcon, String? navigation, List<Vinyl> list, BuildContext context)
       },
     );
   }
