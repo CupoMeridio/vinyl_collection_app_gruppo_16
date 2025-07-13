@@ -265,7 +265,17 @@ class DatabaseService {
       orderBy: 'dateAdded DESC', // Più recenti prima
       limit: limit,              // Limita risultati per efficienza
     );
-    return List.generate(maps.length, (i) => Vinyl.fromMap(maps[i]));
+    
+    // Carica le canzoni per ogni vinile
+    List<Vinyl> vinyls = [];
+    for (var map in maps) {
+      Vinyl vinyl = Vinyl.fromMap(map);
+      // Carica le canzoni associate al vinile
+      vinyl.song = await getSongsByVinylId(vinyl.id!);
+      vinyls.add(vinyl);
+    }
+    
+    return vinyls;
   }
 
   // Recupera solo i vinili marcati come preferiti
@@ -278,7 +288,17 @@ class DatabaseService {
       whereArgs: [1],            // 1 = true in SQLite
       orderBy: 'dateAdded DESC', // Più recenti prima
     );
-    return List.generate(maps.length, (i) => Vinyl.fromMap(maps[i]));
+    
+    // Carica le canzoni per ogni vinile
+    List<Vinyl> vinyls = [];
+    for (var map in maps) {
+      Vinyl vinyl = Vinyl.fromMap(map);
+      // Carica le canzoni associate al vinile
+      vinyl.song = await getSongsByVinylId(vinyl.id!);
+      vinyls.add(vinyl);
+    }
+    
+    return vinyls;
   }
 
   // Ricerca testuale nei campi principali del vinile
@@ -295,7 +315,17 @@ class DatabaseService {
       whereArgs: ['%$query%', '%$query%', '%$query%'],
       orderBy: 'dateAdded DESC',
     );
-    return List.generate(maps.length, (i) => Vinyl.fromMap(maps[i]));
+    
+    // Carica le canzoni per ogni vinile
+    List<Vinyl> vinyls = [];
+    for (var map in maps) {
+      Vinyl vinyl = Vinyl.fromMap(map);
+      // Carica le canzoni associate al vinile
+      vinyl.song = await getSongsByVinylId(vinyl.id!);
+      vinyls.add(vinyl);
+    }
+    
+    return vinyls;
   }
 
   // Filtra vinili per genere musicale specifico
@@ -308,7 +338,17 @@ class DatabaseService {
       whereArgs: [genre],        // Genere specifico
       orderBy: 'dateAdded DESC',
     );
-    return List.generate(maps.length, (i) => Vinyl.fromMap(maps[i]));
+    
+    // Carica le canzoni per ogni vinile
+    List<Vinyl> vinyls = [];
+    for (var map in maps) {
+      Vinyl vinyl = Vinyl.fromMap(map);
+      // Carica le canzoni associate al vinile
+      vinyl.song = await getSongsByVinylId(vinyl.id!);
+      vinyls.add(vinyl);
+    }
+    
+    return vinyls;
   }
 
   // Aggiorna un vinile esistente nel database
@@ -505,7 +545,17 @@ class DatabaseService {
       orderBy: 'year ASC',   // Ordina per anno crescente
       limit: limit,          // Limita i risultati
     );
-    return List.generate(maps.length, (i) => Vinyl.fromMap(maps[i]));
+    
+    // Carica le canzoni per ogni vinile
+    List<Vinyl> vinyls = [];
+    for (var map in maps) {
+      Vinyl vinyl = Vinyl.fromMap(map);
+      // Carica le canzoni associate al vinile
+      vinyl.song = await getSongsByVinylId(vinyl.id!);
+      vinyls.add(vinyl);
+    }
+    
+    return vinyls;
   }
 
   // === RAGGRUPPAMENTO TEMPORALE: ANALISI CRONOLOGICA ===

@@ -5,11 +5,11 @@ import 'search_view.dart';
 import 'analisi_view.dart';
 import 'categorie_view.dart';
 import 'genre_vinyls_view.dart';
-import 'services/vinyl_provider.dart';
-import 'utils/constants.dart';
+import '../services/vinyl_provider.dart';
+import '../utils/constants.dart';
 import 'dettaglio_vinile.dart';
-import 'models/vinyl.dart';
-import 'screens/add_edit_vinyl_screen.dart';
+import '../models/vinyl.dart';
+import 'add_edit_vinyl_screen.dart';
 
 
 

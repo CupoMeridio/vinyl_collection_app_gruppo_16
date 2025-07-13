@@ -1,37 +1,65 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:vinyl_collection_app_gruppo_16/services/database_service.dart';
+import 'package:provider/provider.dart';
+import 'package:vinyl_collection_app_gruppo_16/services/vinyl_provider.dart';
 import 'package:vinyl_collection_app_gruppo_16/models/vinyl.dart';
 
 
 class GraficoATorta extends StatelessWidget {
     final Map<String, Color> generiColori;
-    final DatabaseService db = DatabaseService();
 
-    GraficoATorta(
+    const GraficoATorta(
     this.generiColori, {super.key}
   );
 
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        db.getGenreDistribution(),
-        db.getTotalVinylCount(),
-      ]),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator( color: Colors.blue,));
-        }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(child: Text('Errore nel caricamento dei dati'));
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator(color: Colors.blue));
         }
 
-        final Map<String, int> generiDistribution = snapshot.data![0] as Map<String, int>;
-        final int totaleVinili = snapshot.data![1] as int;
+        final Map<String, int> generiDistribution = provider.genreDistribution;
+        final int totaleVinili = provider.totalVinyls;
         final List<String> generi = generiDistribution.keys.toList();
+        
+        // Gestione stato vuoto quando non ci sono vinili
+        if (totaleVinili == 0 || generi.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.pie_chart_outline,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Nessun dato disponibile',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Aggiungi dei vinili per vedere\nla distribuzione per genere',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
         List<DatiGrafico> dati = [];
 
         for (var genere in generi) {
@@ -39,7 +67,7 @@ class GraficoATorta extends StatelessWidget {
           final double value = totaleVinili > 0 ? count / totaleVinili : 0.0;
           dati.add(DatiGrafico(
             value: value*100,
-            color: generiColori[genere] ?? Colors.grey,
+            color: generiColori[genere] ?? Color.fromRGBO(genere.hashCode.abs() % 256,genere.length * 20 % 256, (genere.codeUnitAt(0) * 3) % 256, 0.5),
             title: genere,
           ));
         }
@@ -71,9 +99,22 @@ class GraficoATorta extends StatelessWidget {
   }
 }
 
+class ScritteRuotate extends StatelessWidget {
+  final String text;
+  const ScritteRuotate({super.key, required this.text});
 
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: -90 * (3.1415926535 / 180),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
 class GraficoALinee extends StatelessWidget {
-  final DatabaseService db = DatabaseService();
   late final String anno; // Anno di default per il grafico
 
   GraficoALinee({super.key, String? anno}) {
@@ -83,18 +124,61 @@ class GraficoALinee extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  FutureBuilder<Map<int, Map<int, List<Vinyl>>>>(
-      future: db.getVinylsByYearAndMonth(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    return Consumer<VinylProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator(color: Colors.blue));
         }
-        if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(child: Text('Errore nel caricamento dei dati'));
+        
+        final Map<int, Map<int, List<Vinyl>>> distribuzionePerAnno = provider.vinylsByYearAndMonth;
+        
+        // Verifica se ci sono dati per l'anno selezionato
+        final Map<int, List<Vinyl>>? datiAnno = distribuzionePerAnno[int.parse(anno)];
+        bool hasData = false;
+        
+        if (datiAnno != null) {
+          for (var mese in datiAnno.values) {
+            if (mese.isNotEmpty) {
+              hasData = true;
+              break;
+            }
+          }
         }
-        final Map<int, Map<int, List<Vinyl>>> distribuzionePerAnno =
-            snapshot.data as Map<int, Map<int, List<Vinyl>>>;
-        // You can use snapshot.data here to build your chart with real data
+        
+        // Gestione stato vuoto quando non ci sono dati per l'anno
+        if (!hasData) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.show_chart,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Nessun dato per il $anno',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Non ci sono vinili aggiunti\nnell\'anno selezionato',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
         return Padding(
           padding: const EdgeInsets.only(right: 10, left: 10, bottom: 70),
           child: LineChart(
@@ -105,6 +189,7 @@ class GraficoALinee extends StatelessWidget {
                   sideTitles: SideTitles(showTitles: false),
                   axisNameWidget: Text(
                     'Numero di Vinili',
+                    textAlign: TextAlign.left,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -119,29 +204,29 @@ class GraficoALinee extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       switch (value.toInt()) {
                         case 1:
-                          return Text('Gen');
+                          return ScritteRuotate(text: 'Gen');
                         case 2:
-                          return Text('Feb');
+                          return ScritteRuotate(text: 'Feb');
                         case 3:
-                          return Text('Mar');
+                          return ScritteRuotate(text: 'Mar');
                         case 4:
-                          return Text('Apr');
+                          return ScritteRuotate(text: 'Apr');
                         case 5:
-                          return Text('Mag');
+                          return ScritteRuotate(text:'Mag');
                         case 6:
-                          return Text('Giu');
+                          return ScritteRuotate(text:'Giu');
                         case 7:
-                          return Text('Lug');
+                          return ScritteRuotate(text:'Lug'); 
                         case 8:
-                          return Text('Ago');
+                          return ScritteRuotate(text:'Ago');
                         case 9:
-                          return Text('Set');
+                          return ScritteRuotate(text:'Set');
                         case 10:
-                          return Text('Ott');
+                          return ScritteRuotate(text:'Ott');
                         case 11:
-                          return Text('Nov');
+                          return ScritteRuotate(text:'Nov');
                         case 12:
-                          return Text('Dic');
+                          return ScritteRuotate(text:'Dic');
                         default:
                           return const SizedBox.shrink();
                       }
@@ -150,13 +235,6 @@ class GraficoALinee extends StatelessWidget {
                 ),
                 topTitles: AxisTitles(
                   sideTitles: SideTitles(showTitles: false),
-                  axisNameWidget: Text(
-                    'Mesi',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ),
               lineBarsData: [

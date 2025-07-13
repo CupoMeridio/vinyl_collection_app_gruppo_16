@@ -34,7 +34,7 @@ import 'services/vinyl_provider.dart';
 import 'utils/constants.dart';
 
 // Import della schermata principale con navigazione
-import 'schermata_principale.dart';
+import 'screens/schermata_principale.dart';
 
 // === ENTRY POINT: BOOTSTRAP DELL'APPLICAZIONE ===
 // PATTERN: Application Bootstrap con configurazione centralizzata
@@ -184,7 +184,7 @@ class _SplashScreenState extends State<SplashScreen> {
   // PATTERN: Timed Navigation Pattern
   // UX: Permette visualizzazione logo e caricamento perceived
   // ERROR HANDLING: Verifica mounted state per prevenire memory leaks
-  _navigateToHome() async {
+  Future<void> _navigateToHome() async {
     // DELAY: Simula caricamento e permette visualizzazione splash
     // TIMING: 2 secondi ottimali per branding senza frustrazione utente
     await Future.delayed(const Duration(seconds: 2));

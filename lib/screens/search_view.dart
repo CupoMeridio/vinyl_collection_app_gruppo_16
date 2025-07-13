@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vinyl_collection_app_gruppo_16/utils/constants.dart';
 import '../services/vinyl_provider.dart';
-import '../models/vinyl.dart';
-import 'dart:io';
+
+import '../widgets/vinyl_card.dart';
+
 
 class SearchView extends StatefulWidget {
   final String? initialFilter;
@@ -24,10 +25,6 @@ class SearchView extends StatefulWidget {
 }
 
 class _SearchViewState extends State<SearchView> {
-  String _selectedGenre = 'Tutti';
-  String _selectedCondition = 'Tutte';
-  int? _selectedYear;
-  bool _showFavoritesOnly = false;
   String _sortBy = 'title';
   bool _sortAscending = true;
   bool _showFilters = false;
@@ -36,35 +33,19 @@ class _SearchViewState extends State<SearchView> {
   void initState() {
     super.initState();
     
-    // Inizializza i filtri locali in base ai parametri
-    if (widget.initialFilter != null) {
-      _selectedGenre = widget.initialFilter!;
-    }
-    if (widget.showFavoritesOnly == true) {
-      _showFavoritesOnly = true;
-    }
-    if (widget.sortBy != null) {
-      _sortBy = widget.sortBy!;
-    }
-    
-    // Applica filtri iniziali se specificati
+    // Inizializza i filtri nel provider in base ai parametri
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _applyFilters();
+      final provider = Provider.of<VinylProvider>(context, listen: false);
+      if (widget.initialFilter != null) {
+        provider.setGenreFilter(widget.initialFilter!);
+      }
+      if (widget.showFavoritesOnly == true) {
+        provider.setFavoritesFilter(true);
+      }
+      if (widget.sortBy != null) {
+        _sortBy = widget.sortBy!;
+      }
     });
-  }
-
-  void _applyFilters() {
-    final provider = Provider.of<VinylProvider>(context, listen: false);
-    
-    // Applica filtri combinati usando i nuovi metodi
-    provider.applyAdvancedFilters(
-      genre: _selectedGenre,
-      year: _selectedYear,
-      favoritesOnly: _showFavoritesOnly,
-      sortBy: _sortBy,
-      condition: _selectedCondition != "Tutte" ? _selectedCondition : null,
-      ascending: _sortAscending,
-    );
   }
 
   @override
@@ -143,7 +124,10 @@ class _SearchViewState extends State<SearchView> {
                   itemCount: vinyls.length,
                   itemBuilder: (context, index) {
                     final vinyl = vinyls[index];
-                    return _buildVinylCard(vinyl);
+                    return VinylCard(
+                      vinyl: vinyl,
+                      type: VinylCardType.horizontal,
+                    );
                   },
                 );
               },
@@ -154,198 +138,31 @@ class _SearchViewState extends State<SearchView> {
     );
   }
 
-  Widget _buildVinylCard(Vinyl vinyl) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/DettaglioVinile',
-            arguments: vinyl,
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Immagine copertina
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: AppConstants.primaryColor.withValues(alpha: 26),
-                ),
-                child: vinyl.imagePath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(vinyl.imagePath!),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildImagePlaceholder();
-                          },
-                        ),
-                      )
-                    : _buildImagePlaceholder(),
-              ),
-              const SizedBox(width: 16),
-              // Informazioni vinile
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vinyl.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      vinyl.artist,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          vinyl.year.toString(),
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Icon(
-                          Icons.business,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            vinyl.label,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getConditionColor(vinyl.condition),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            vinyl.condition,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        if (vinyl.isFavorite)
-                          Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildImagePlaceholder() {
-    return Center(
-      child: Icon(
-        Icons.album,
-        color: AppConstants.primaryColor.withValues(alpha: 128),
-        size: 32,
-      ),
-    );
-  }
-
-  Color _getConditionColor(String condition) {
-    switch (condition) {
-      case 'Nuovo':
-        return Colors.green[700]!;
-      case 'Ottimo':
-        return Colors.green[600]!;
-      case 'Buono':
-        return Colors.orange[700]!;
-      case 'Discreto':
-        return Colors.deepOrange[700]!;
-      case 'Da restaurare':
-        return Colors.red[700]!;
-      default:
-        return Colors.grey[700]!;
-    }
-  }
 
   List<dynamic> _getFilteredVinyls(VinylProvider provider) {
-    // Controlla prima il filtro locale per i preferiti
-    if (_showFavoritesOnly || widget.showFavoritesOnly == true) {
-      return provider.favoriteVinyls;
-    }
-    
-    if (widget.sortBy == 'recent') {
-      return provider.recentVinyls;
-    }
-    
-    if (widget.sortBy == 'random') {
-      return provider.randomVinyls;
-    }
-    
+    // Usa sempre filteredVinyls che contiene la logica di filtraggio combinata
     return provider.filteredVinyls;
   }
   
   Widget _buildFiltersSection() {
     return Consumer<VinylProvider>(
       builder: (context, provider, child) {
-        final genres = ['Tutti', ...provider.genreDistribution.keys];
-        final years = provider.vinyls.map((v) => v.year).toSet().toList()..sort((a, b) => b.compareTo(a));
-        final conditions = ["Tutte", ...provider.conditionDistribution.keys];
+        // Sincronizza stato UI con provider
+        final currentGenre = provider.selectedGenre ?? 'Tutti';
+        final currentYear = provider.selectedYear;
+        final currentCondition = provider.selectedCondition ?? 'Tutte';
+        final currentFavorites = provider.showFavoritesOnly;
+        
+        // Ottieni le liste complete (non filtrate) per i dropdown
+        final allGenres = provider.genreDistribution.keys.toList();
+        final allYears = provider.vinyls.map((v) => v.year).cast<int>().toSet().toList();
+        final allConditions = provider.conditionDistribution.keys.toList();
+
+        // Crea le liste complete con le opzioni predefinite
+        final genres = ['Tutti', ...allGenres];
+        final years = allYears..sort((a, b) => b.compareTo(a));
+        final conditions = ["Tutte", ...allConditions];
 
         return Container(
           padding: const EdgeInsets.all(16.0),
@@ -378,7 +195,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<String>(
                       key: Key('genre_filter_dropdown'),
-                      value: _selectedGenre,
+                      value: currentGenre,
                       isExpanded: true,
                       items: genres.map((genre) {
                         return DropdownMenuItem(
@@ -387,10 +204,8 @@ class _SearchViewState extends State<SearchView> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _selectedGenre = value!;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setGenreFilter(value!);
                       },
                     ),
                   ),
@@ -408,7 +223,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<int?>(
                       key: Key('year_filter_dropdown'),
-                      value: _selectedYear,
+                      value: currentYear,
                       isExpanded: true,
                       hint: Text('Tutti gli anni'),
                       items: [
@@ -424,10 +239,8 @@ class _SearchViewState extends State<SearchView> {
                         }),
                       ],
                       onChanged: (value) {
-                        setState(() {
-                          _selectedYear = value;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setYearFilter(value);
                       },
                     ),
                   ),
@@ -445,7 +258,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<String>(
                       key: Key('condition_filter_dropdown'),
-                      value: _selectedCondition,
+                      value: currentCondition,
                       isExpanded: true,
                       items: conditions.map((condition) {
                         return DropdownMenuItem(
@@ -454,10 +267,8 @@ class _SearchViewState extends State<SearchView> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _selectedCondition = value!;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setConditionFilter(value!);
                       },
                     ),
                   ),
@@ -469,12 +280,10 @@ class _SearchViewState extends State<SearchView> {
               CheckboxListTile(
                 key: Key('favorites_filter_checkbox'),
                 title: Text('Solo Preferiti', style: TextStyle(fontSize: 14)),
-                value: _showFavoritesOnly,
+                value: currentFavorites,
                 onChanged: (value) {
-                  setState(() {
-                    _showFavoritesOnly = value!;
-                  });
-                  _applyFilters();
+                  final provider = Provider.of<VinylProvider>(context, listen: false);
+                  provider.setFavoritesFilter(value!);
                 },
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
@@ -501,10 +310,12 @@ class _SearchViewState extends State<SearchView> {
                         DropdownMenuItem(value: 'random', child: Text('Casuale')),
                       ],
                       onChanged: (value) {
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
                         setState(() {
                           _sortBy = value!;
                         });
-                        _applyFilters();
+                        // Applica solo l'ordinamento senza sovrascrivere i filtri
+                        provider.applySorting(_sortBy, _sortAscending);
                       },
                     ),
                   ),
@@ -529,10 +340,12 @@ class _SearchViewState extends State<SearchView> {
                               value: true,
                               groupValue: _sortAscending,
                               onChanged: (value) {
+                                final provider = Provider.of<VinylProvider>(context, listen: false);
                                 setState(() {
                                   _sortAscending = value!;
                                 });
-                                _applyFilters();
+                                // Applica solo l'ordinamento senza sovrascrivere i filtri
+                                provider.applySorting(_sortBy, _sortAscending);
                               },
                               contentPadding: EdgeInsets.zero,
                             ),
@@ -543,10 +356,12 @@ class _SearchViewState extends State<SearchView> {
                               value: false,
                               groupValue: _sortAscending,
                               onChanged: (value) {
+                                final provider = Provider.of<VinylProvider>(context, listen: false);
                                 setState(() {
                                   _sortAscending = value!;
                                 });
-                                _applyFilters();
+                                // Applica solo l'ordinamento senza sovrascrivere i filtri
+                                provider.applySorting(_sortBy, _sortAscending);
                               },
                               contentPadding: EdgeInsets.zero,
                             ),
@@ -565,10 +380,6 @@ class _SearchViewState extends State<SearchView> {
                     final provider = Provider.of<VinylProvider>(context, listen: false);
                     provider.resetFilters();
                     setState(() {
-                      _selectedGenre = 'Tutti';
-                      _selectedYear = null;
-                      _showFavoritesOnly = false;
-                      _selectedCondition = 'Tutte';
                       _sortBy = 'title';
                       _sortAscending = true;
                     });
