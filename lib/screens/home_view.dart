@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 
 // Import dei servizi e schermate necessari
 import '../services/vinyl_provider.dart';
-import '../utils/constants.dart';
+import  "package:vinyl_collection_app_gruppo_16/utils/constants.dart";
 import "../models/section.dart";
 import 'search_view.dart';
+
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -278,23 +279,7 @@ class _HomeViewState extends State<HomeView> {
   
   // === GENRE CARD: Widget per singola categoria ===
   Widget _buildGenreCard(String genre, int count) {
-    final genreColors = {
-      'Rock': Colors.red,
-      'Pop': Colors.blue,
-      'Jazz': Colors.green,
-      'Blues': Colors.brown,
-      'Classical': Colors.purple,
-      'Electronic': Colors.cyan,
-      'Hip Hop': Colors.orange,
-      'Country': Colors.lime,
-      'Folk': Colors.teal,
-      'Reggae': Colors.lightGreen,
-      'Punk': Colors.pink,
-      'Metal': Colors.grey,
-      'R&B': Colors.deepPurple,
-      'Soul': Colors.amber,
-      'Funk': Colors.deepOrange,
-    };
+    final genreColors = AppConstants.genreColors;
     
     final color = genreColors[genre] ?? Colors.indigo;
     

@@ -88,7 +88,7 @@ class AppConstants {
   // === COLORI DEI GENERI MUSICALI ===
   // Mappa che associa ogni genere musicale a un colore specifico
   // Utilizzata per la visualizzazione coerente dei generi nell'interfaccia
-  static const Map<String, Color> genreColors = {
+  static Map<String, Color> genreColors = {
     'Rock': Colors.red,
     'Pop': Colors.blue,
     'Jazz': Colors.green,

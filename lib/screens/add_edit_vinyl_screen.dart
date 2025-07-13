@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:vinyl_collection_app_gruppo_16/utils/schermo_adattivo.dart';
 import 'dart:io';
 
 // Import dei modelli e servizi necessari
