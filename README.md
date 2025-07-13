@@ -236,10 +236,13 @@ lib/
 │   ├── categorie_view.dart
 │   └── genre_vinyls_view.dart
 └── utils/                       # Utilità e costanti
-    ├── constants.dart          # Costanti applicazione
-    ├── grafico.dart           # Widget grafici
-    ├── drop_down.dart         # Widget dropdown
-    └── schermo_adattivo.dart  # Responsive design
+│   ├── constants.dart          # Costanti applicazione
+│   ├── grafico.dart           # Widget grafici
+│   ├── drop_down.dart         # Widget dropdown
+│   └── schermo_adattivo.dart  # Responsive design
+└── widgets/
+    └── vinyl_card.dart        # Widget Vinyl Card
+
 ```
 
 ---
