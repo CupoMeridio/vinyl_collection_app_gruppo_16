@@ -15,8 +15,6 @@ class GenreVinylsView extends StatefulWidget {
 }
 
 class _GenreVinylsViewState extends State<GenreVinylsView> {
-  List<Vinyl> _genreVinyls = [];
-  bool _isLoading = true;
   String _sortBy = 'dateAdded'; // dateAdded, title, artist, year
   bool _sortAscending = false;
 
@@ -27,29 +25,10 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
   }
 
   Future<void> _loadGenreVinyls() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
       final provider = Provider.of<VinylProvider>(context, listen: false);
       await provider.loadVinyls();
-      
-      final allVinyls = provider.vinyls;
-      final filteredVinyls = allVinyls
-          .where((vinyl) => vinyl.genre == widget.genre)
-          .toList();
-      
-      setState(() {
-        _genreVinyls = filteredVinyls;
-        _isLoading = false;
-      });
-      
-      _sortVinyls();
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -61,28 +40,33 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
     }
   }
 
-  void _sortVinyls() {
-    setState(() {
-      _genreVinyls.sort((a, b) {
-        int comparison;
-        switch (_sortBy) {
-          case 'title':
-            comparison = a.title.toLowerCase().compareTo(b.title.toLowerCase());
-            break;
-          case 'artist':
-            comparison = a.artist.toLowerCase().compareTo(b.artist.toLowerCase());
-            break;
-          case 'year':
-            comparison = a.year.compareTo(b.year);
-            break;
-          case 'dateAdded':
-          default:
-            comparison = a.dateAdded.compareTo(b.dateAdded);
-            break;
-        }
-        return _sortAscending ? comparison : -comparison;
-      });
+  List<Vinyl> _getGenreVinyls(VinylProvider provider) {
+    final filteredVinyls = provider.vinyls
+        .where((vinyl) => vinyl.genre == widget.genre)
+        .toList();
+    
+    // Applica ordinamento
+    filteredVinyls.sort((a, b) {
+      int comparison;
+      switch (_sortBy) {
+        case 'title':
+          comparison = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          break;
+        case 'artist':
+          comparison = a.artist.toLowerCase().compareTo(b.artist.toLowerCase());
+          break;
+        case 'year':
+          comparison = a.year.compareTo(b.year);
+          break;
+        case 'dateAdded':
+        default:
+          comparison = a.dateAdded.compareTo(b.dateAdded);
+          break;
+      }
+      return _sortAscending ? comparison : -comparison;
     });
+    
+    return filteredVinyls;
   }
 
   void _showSortOptions() {
@@ -119,7 +103,6 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
                       setState(() {
                         _sortAscending = true;
                       });
-                      _sortVinyls();
                       Navigator.pop(context);
                     },
                   ),
@@ -131,7 +114,6 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
                       setState(() {
                         _sortAscending = false;
                       });
-                      _sortVinyls();
                       Navigator.pop(context);
                     },
                   ),
@@ -153,7 +135,6 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
         setState(() {
           _sortBy = value;
         });
-        _sortVinyls();
         Navigator.pop(context);
       },
     );
@@ -167,7 +148,12 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.genre} (${_genreVinyls.length})'),
+        title: Consumer<VinylProvider>(
+          builder: (context, provider, child) {
+            final genreVinyls = _getGenreVinyls(provider);
+            return Text('${widget.genre} (${genreVinyls.length})');
+          },
+        ),
         backgroundColor: genreColor,
         actions: [
           IconButton(
@@ -182,19 +168,27 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
+      body: Consumer<VinylProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(
               child: CircularProgressIndicator(),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadGenreVinyls,
-              child: _buildVinylsList(),
-            ),
+            );
+          }
+          
+          return RefreshIndicator(
+            onRefresh: _loadGenreVinyls,
+            child: _buildVinylsList(provider),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildVinylsList() {
-    if (_genreVinyls.isEmpty) {
+  Widget _buildVinylsList(VinylProvider provider) {
+    final genreVinyls = _getGenreVinyls(provider);
+    
+    if (genreVinyls.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -228,9 +222,9 @@ class _GenreVinylsViewState extends State<GenreVinylsView> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _genreVinyls.length,
+      itemCount: genreVinyls.length,
       itemBuilder: (context, index) {
-        final vinyl = _genreVinyls[index];
+        final vinyl = genreVinyls[index];
         return _buildVinylCard(vinyl);
       },
     );

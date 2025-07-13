@@ -55,7 +55,7 @@ class VinylProvider with ChangeNotifier {
   String _searchQuery = '';
   
   // STATO FILTRO: Genere selezionato per il filtro
-  String _selectedGenre = 'Tutti';
+  String? _selectedGenre;
   
   // STATO FILTRO: Anno selezionato per il filtro
   int? _selectedYear;
@@ -91,15 +91,26 @@ class VinylProvider with ChangeNotifier {
   // COMPUTED PROPERTY: Vista intelligente che decide quale lista mostrare
   // ALGORITMO: Mostra lista filtrata se ci sono filtri attivi, altrimenti lista completa
   // PERFORMANCE: Evita calcoli inutili quando non ci sono filtri
-  List<Vinyl> get filteredVinyls => _filteredVinyls.isEmpty && _searchQuery.isEmpty && _selectedGenre == 'Tutti' ? _vinyls : _filteredVinyls;
+  List<Vinyl> get filteredVinyls => _filteredVinyls;
   
   String get searchQuery => _searchQuery;
-  String get selectedGenre => _selectedGenre;
+  String? get selectedGenre => _selectedGenre;
   int? get selectedYear => _selectedYear;
   bool get showFavoritesOnly => _showFavoritesOnly;
   String? get selectedCondition => _selectedCondition;
   bool get sortAscending => _sortAscending;
   bool get isLoading => _isLoading;
+  
+  // GETTERS PER DEBUG: Espongono stato filtri per debugging
+  // MOTIVAZIONE: Permettono di verificare discrepanze tra stato provider e UI
+  Map<String, dynamic> get currentFiltersState => {
+    'selectedGenre': _selectedGenre,
+    'selectedYear': _selectedYear,
+    'selectedCondition': _selectedCondition,
+    'showFavoritesOnly': _showFavoritesOnly,
+    'searchQuery': _searchQuery,
+    'sortAscending': _sortAscending,
+  };
   
   // === GETTERS COMPUTATI: DERIVED STATE PATTERN ===
   // MOTIVAZIONE: Calcoli derivati dallo stato principale
@@ -423,11 +434,16 @@ class VinylProvider with ChangeNotifier {
      String? condition,
      bool? ascending,
    }) {
-     // Aggiorna stato filtri se forniti
-     if (genre != null) _selectedGenre = genre;
-     if (year != null) _selectedYear = year;
+     // Aggiorna stato filtri SOLO se forniti esplicitamente
+     if (genre != null) {
+       _selectedGenre = genre == 'Tutti' ? null : genre;
+     }
+     // Gestiamo esplicitamente il caso null ("Tutti gli anni")
+      _selectedYear = year;
      if (favoritesOnly != null) _showFavoritesOnly = favoritesOnly;
-     if (condition != null) _selectedCondition = condition;
+     if (condition != null) {
+       _selectedCondition = condition == 'Tutte' ? null : condition;
+     }
      if (ascending != null) _sortAscending = ascending;
      
      // Applica filtri usando la funzione centralizzata
@@ -465,7 +481,7 @@ class VinylProvider with ChangeNotifier {
    
    // FILTER SETTERS: Metodi per aggiornare singoli filtri
    void setGenreFilter(String genre) {
-     _selectedGenre = genre;
+     _selectedGenre = genre == 'Tutti' ? null : genre;
      _applyFilters();
      notifyListeners();
    }
@@ -482,6 +498,12 @@ class VinylProvider with ChangeNotifier {
      notifyListeners();
    }
    
+   void setConditionFilter(String condition) {
+     _selectedCondition = condition == 'Tutte' ? null : condition;
+     _applyFilters();
+     notifyListeners();
+   }
+   
    void setSortOrder(bool ascending) {
      _sortAscending = ascending;
      notifyListeners();
@@ -489,13 +511,47 @@ class VinylProvider with ChangeNotifier {
    
    // RESET FILTERS: Resetta tutti i filtri
    void resetFilters() {
-     _selectedGenre = 'Tutti';
+     _selectedGenre = null;
      _selectedYear = null;
      _showFavoritesOnly = false;
      _selectedCondition = null;
      _searchQuery = '';
      _sortAscending = true;
      _applyFilters();
+     notifyListeners();
+   }
+   
+   // APPLY SORTING: Applica solo l'ordinamento senza toccare i filtri
+   void applySorting(String sortBy, bool ascending) {
+     _sortAscending = ascending;
+     
+     // Applica ordinamento alla lista già filtrata
+     switch (sortBy) {
+       case 'title':
+         _filteredVinyls.sort((a, b) => ascending 
+           ? a.title.compareTo(b.title) 
+           : b.title.compareTo(a.title));
+         break;
+       case 'artist':
+         _filteredVinyls.sort((a, b) => ascending 
+           ? a.artist.compareTo(b.artist) 
+           : b.artist.compareTo(a.artist));
+         break;
+       case 'year':
+         _filteredVinyls.sort((a, b) => ascending 
+           ? a.year.compareTo(b.year) 
+           : b.year.compareTo(a.year));
+         break;
+       case 'recent':
+         _filteredVinyls.sort((a, b) => ascending 
+           ? a.dateAdded.compareTo(b.dateAdded) 
+           : b.dateAdded.compareTo(a.dateAdded));
+         break;
+       case 'random':
+         _filteredVinyls.shuffle();
+         break;
+     }
+     
      notifyListeners();
    }
  
@@ -518,7 +574,7 @@ class VinylProvider with ChangeNotifier {
     }
     
     // GENRE FILTER: Filtro esatto per categoria
-    if (_selectedGenre != 'Tutti') {
+    if (_selectedGenre != null && _selectedGenre!.isNotEmpty) {
       filtered = filtered.where((vinyl) => vinyl.genre == _selectedGenre).toList();
     }
     
@@ -533,7 +589,7 @@ class VinylProvider with ChangeNotifier {
     }
     
     // CONDITION FILTER: Filtro per condizione del vinile
-    if (_selectedCondition != null && _selectedCondition != 'Tutte') {
+    if (_selectedCondition != null) {
       filtered = filtered.where((vinyl) => vinyl.condition == _selectedCondition).toList();
     }
     
@@ -600,6 +656,24 @@ class VinylProvider with ChangeNotifier {
     Map<String, int> distribution = {};
     for (var vinyl in _vinyls) {
       distribution[vinyl.condition] = (distribution[vinyl.condition] ?? 0) + 1;
+    }
+    return distribution;
+  }
+
+  // FILTERED CONDITION DISTRIBUTION: Distribuzione condizioni sui vinili filtrati
+  Map<String, int> get filteredConditionDistribution {
+    Map<String, int> distribution = {};
+    for (var vinyl in _filteredVinyls) {
+      distribution[vinyl.condition] = (distribution[vinyl.condition] ?? 0) + 1;
+    }
+    return distribution;
+  }
+
+  // FILTERED GENRE DISTRIBUTION: Distribuzione generi sui vinili filtrati
+  Map<String, int> get filteredGenreDistribution {
+    Map<String, int> distribution = {};
+    for (var vinyl in _filteredVinyls) {
+      distribution[vinyl.genre] = (distribution[vinyl.genre] ?? 0) + 1;
     }
     return distribution;
   }

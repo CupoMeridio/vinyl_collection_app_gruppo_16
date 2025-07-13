@@ -24,10 +24,6 @@ class SearchView extends StatefulWidget {
 }
 
 class _SearchViewState extends State<SearchView> {
-  String _selectedGenre = 'Tutti';
-  String _selectedCondition = 'Tutte';
-  int? _selectedYear;
-  bool _showFavoritesOnly = false;
   String _sortBy = 'title';
   bool _sortAscending = true;
   bool _showFilters = false;
@@ -36,35 +32,19 @@ class _SearchViewState extends State<SearchView> {
   void initState() {
     super.initState();
     
-    // Inizializza i filtri locali in base ai parametri
-    if (widget.initialFilter != null) {
-      _selectedGenre = widget.initialFilter!;
-    }
-    if (widget.showFavoritesOnly == true) {
-      _showFavoritesOnly = true;
-    }
-    if (widget.sortBy != null) {
-      _sortBy = widget.sortBy!;
-    }
-    
-    // Applica filtri iniziali se specificati
+    // Inizializza i filtri nel provider in base ai parametri
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _applyFilters();
+      final provider = Provider.of<VinylProvider>(context, listen: false);
+      if (widget.initialFilter != null) {
+        provider.setGenreFilter(widget.initialFilter!);
+      }
+      if (widget.showFavoritesOnly == true) {
+        provider.setFavoritesFilter(true);
+      }
+      if (widget.sortBy != null) {
+        _sortBy = widget.sortBy!;
+      }
     });
-  }
-
-  void _applyFilters() {
-    final provider = Provider.of<VinylProvider>(context, listen: false);
-    
-    // Applica filtri combinati usando i nuovi metodi
-    provider.applyAdvancedFilters(
-      genre: _selectedGenre,
-      year: _selectedYear,
-      favoritesOnly: _showFavoritesOnly,
-      sortBy: _sortBy,
-      condition: _selectedCondition != "Tutte" ? _selectedCondition : null,
-      ascending: _sortAscending,
-    );
   }
 
   @override
@@ -324,28 +304,28 @@ class _SearchViewState extends State<SearchView> {
   }
 
   List<dynamic> _getFilteredVinyls(VinylProvider provider) {
-    // Controlla prima il filtro locale per i preferiti
-    if (_showFavoritesOnly || widget.showFavoritesOnly == true) {
-      return provider.favoriteVinyls;
-    }
-    
-    if (widget.sortBy == 'recent') {
-      return provider.recentVinyls;
-    }
-    
-    if (widget.sortBy == 'random') {
-      return provider.randomVinyls;
-    }
-    
+    // Usa sempre filteredVinyls che contiene la logica di filtraggio combinata
     return provider.filteredVinyls;
   }
   
   Widget _buildFiltersSection() {
     return Consumer<VinylProvider>(
       builder: (context, provider, child) {
-        final genres = ['Tutti', ...provider.genreDistribution.keys];
-        final years = provider.vinyls.map((v) => v.year).toSet().toList()..sort((a, b) => b.compareTo(a));
-        final conditions = ["Tutte", ...provider.conditionDistribution.keys];
+        // Sincronizza stato UI con provider
+        final currentGenre = provider.selectedGenre ?? 'Tutti';
+        final currentYear = provider.selectedYear;
+        final currentCondition = provider.selectedCondition ?? 'Tutte';
+        final currentFavorites = provider.showFavoritesOnly;
+        
+        // Ottieni le liste complete (non filtrate) per i dropdown
+        final allGenres = provider.genreDistribution.keys.toList();
+        final allYears = provider.vinyls.map((v) => v.year).cast<int>().toSet().toList();
+        final allConditions = provider.conditionDistribution.keys.toList();
+
+        // Crea le liste complete con le opzioni predefinite
+        final genres = ['Tutti', ...allGenres];
+        final years = allYears..sort((a, b) => b.compareTo(a));
+        final conditions = ["Tutte", ...allConditions];
 
         return Container(
           padding: const EdgeInsets.all(16.0),
@@ -378,7 +358,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<String>(
                       key: Key('genre_filter_dropdown'),
-                      value: _selectedGenre,
+                      value: currentGenre,
                       isExpanded: true,
                       items: genres.map((genre) {
                         return DropdownMenuItem(
@@ -387,10 +367,8 @@ class _SearchViewState extends State<SearchView> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _selectedGenre = value!;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setGenreFilter(value!);
                       },
                     ),
                   ),
@@ -408,7 +386,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<int?>(
                       key: Key('year_filter_dropdown'),
-                      value: _selectedYear,
+                      value: currentYear,
                       isExpanded: true,
                       hint: Text('Tutti gli anni'),
                       items: [
@@ -424,10 +402,8 @@ class _SearchViewState extends State<SearchView> {
                         }),
                       ],
                       onChanged: (value) {
-                        setState(() {
-                          _selectedYear = value;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setYearFilter(value);
                       },
                     ),
                   ),
@@ -445,7 +421,7 @@ class _SearchViewState extends State<SearchView> {
                   Expanded(
                     child: DropdownButton<String>(
                       key: Key('condition_filter_dropdown'),
-                      value: _selectedCondition,
+                      value: currentCondition,
                       isExpanded: true,
                       items: conditions.map((condition) {
                         return DropdownMenuItem(
@@ -454,10 +430,8 @@ class _SearchViewState extends State<SearchView> {
                         );
                       }).toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _selectedCondition = value!;
-                        });
-                        _applyFilters();
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
+                        provider.setConditionFilter(value!);
                       },
                     ),
                   ),
@@ -469,12 +443,10 @@ class _SearchViewState extends State<SearchView> {
               CheckboxListTile(
                 key: Key('favorites_filter_checkbox'),
                 title: Text('Solo Preferiti', style: TextStyle(fontSize: 14)),
-                value: _showFavoritesOnly,
+                value: currentFavorites,
                 onChanged: (value) {
-                  setState(() {
-                    _showFavoritesOnly = value!;
-                  });
-                  _applyFilters();
+                  final provider = Provider.of<VinylProvider>(context, listen: false);
+                  provider.setFavoritesFilter(value!);
                 },
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
@@ -501,10 +473,12 @@ class _SearchViewState extends State<SearchView> {
                         DropdownMenuItem(value: 'random', child: Text('Casuale')),
                       ],
                       onChanged: (value) {
+                        final provider = Provider.of<VinylProvider>(context, listen: false);
                         setState(() {
                           _sortBy = value!;
                         });
-                        _applyFilters();
+                        // Applica solo l'ordinamento senza sovrascrivere i filtri
+                        provider.applySorting(_sortBy, _sortAscending);
                       },
                     ),
                   ),
@@ -529,10 +503,12 @@ class _SearchViewState extends State<SearchView> {
                               value: true,
                               groupValue: _sortAscending,
                               onChanged: (value) {
+                                final provider = Provider.of<VinylProvider>(context, listen: false);
                                 setState(() {
                                   _sortAscending = value!;
                                 });
-                                _applyFilters();
+                                // Applica solo l'ordinamento senza sovrascrivere i filtri
+                                provider.applySorting(_sortBy, _sortAscending);
                               },
                               contentPadding: EdgeInsets.zero,
                             ),
@@ -543,10 +519,12 @@ class _SearchViewState extends State<SearchView> {
                               value: false,
                               groupValue: _sortAscending,
                               onChanged: (value) {
+                                final provider = Provider.of<VinylProvider>(context, listen: false);
                                 setState(() {
                                   _sortAscending = value!;
                                 });
-                                _applyFilters();
+                                // Applica solo l'ordinamento senza sovrascrivere i filtri
+                                provider.applySorting(_sortBy, _sortAscending);
                               },
                               contentPadding: EdgeInsets.zero,
                             ),
@@ -565,10 +543,6 @@ class _SearchViewState extends State<SearchView> {
                     final provider = Provider.of<VinylProvider>(context, listen: false);
                     provider.resetFilters();
                     setState(() {
-                      _selectedGenre = 'Tutti';
-                      _selectedYear = null;
-                      _showFavoritesOnly = false;
-                      _selectedCondition = 'Tutte';
                       _sortBy = 'title';
                       _sortAscending = true;
                     });

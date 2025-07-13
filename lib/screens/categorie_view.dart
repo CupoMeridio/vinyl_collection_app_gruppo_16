@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/database_service.dart';
+import '../services/vinyl_provider.dart';
 import '../models/category.dart' as models;
 import '../utils/constants.dart';
 
@@ -21,13 +23,29 @@ class _CategorieViewState extends State<CategorieView> {
   void initState() {
     super.initState();
     _loadGenreDistribution();
+    
+    // Ascolta i cambiamenti del VinylProvider per aggiornare la distribuzione
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<VinylProvider>(context, listen: false);
+      provider.addListener(_onVinylProviderChanged);
+    });
   }
-
+  
   @override
   void dispose() {
+    // Rimuovi il listener quando il widget viene distrutto
+    final provider = Provider.of<VinylProvider>(context, listen: false);
+    provider.removeListener(_onVinylProviderChanged);
     _newCategoryController.dispose();
     super.dispose();
   }
+  
+  void _onVinylProviderChanged() {
+    // Ricarica la distribuzione quando cambiano i vinili
+    _loadGenreDistribution();
+  }
+
+
 
   Future<void> _loadGenreDistribution() async {
     try {
