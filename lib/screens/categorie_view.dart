@@ -102,7 +102,7 @@ class _CategorieViewState extends State<CategorieView> {
       
       // Ricarica la distribuzione per includere la nuova categoria
       await _loadGenreDistribution();
-      
+      AppConstants.genreColors[categoryName] = Colors.primaries[AppConstants.genreColors.length % Colors.primaries.length];
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

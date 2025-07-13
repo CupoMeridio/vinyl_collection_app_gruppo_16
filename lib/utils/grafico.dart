@@ -74,7 +74,7 @@ class GraficoATorta extends StatelessWidget {
           final double value = totaleVinili > 0 ? count / totaleVinili : 0.0;
           dati.add(DatiGrafico(
             value: value*100,
-            color: generiColori[genere] ?? Colors.grey,
+            color: generiColori[genere] ?? Color.fromRGBO(genere.hashCode.abs() % 256,genere.length * 20 % 256, (genere.codeUnitAt(0) * 3) % 256, 0.5),
             title: genere,
           ));
         }
