@@ -350,7 +350,6 @@ class _SchermataDettaglioState extends State<SchermataDettaglio> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () async {
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 final navigator = Navigator.of(context);
                 final result = await navigator.push(
                   MaterialPageRoute(
@@ -362,12 +361,6 @@ class _SchermataDettaglioState extends State<SchermataDettaglio> {
                 // REFRESH: Ricarica dati se vinile modificato con successo
                 if (result == true && mounted) {
                   await _refreshVinylAndSongs();
-                  scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Vinile modificato con successo!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
                 }
               },
               icon: const Icon(Icons.edit),
