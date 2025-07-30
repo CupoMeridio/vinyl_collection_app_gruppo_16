@@ -115,6 +115,21 @@ class _CategorieViewState extends State<CategorieView> {
 
   Future<void> _addNewCategory(String categoryName) async {
     try {
+      // Verifica se esiste già una categoria con lo stesso nome (case-insensitive)
+      final existingCategory = await _databaseService.getCategoryByName(categoryName);
+      
+      if (existingCategory != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('La categoria "${existingCategory.name}" esiste già'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+      
       final category = models.Category(name: categoryName);
       await _databaseService.insertCategory(category);
       

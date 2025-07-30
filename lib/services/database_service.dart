@@ -760,7 +760,15 @@ class DatabaseService {
   // Inserisce una nuova categoria nel database
   Future<int> insertCategory(models.Category category) async {
     final db = await database;
-    return await db.insert(AppConstants.categoryTable, category.toMap());
+    try {
+      return await db.insert(AppConstants.categoryTable, category.toMap());
+    } catch (e) {
+      // Gestisci il caso di duplicato (UNIQUE constraint violation)
+      if (e.toString().contains('UNIQUE constraint failed')) {
+        throw Exception('Categoria già esistente');
+      }
+      rethrow;
+    }
   }
   
   // Aggiorna una categoria esistente
@@ -784,12 +792,12 @@ class DatabaseService {
     );
   }
   
-  // Recupera una categoria per nome
+  // Recupera una categoria per nome (case-insensitive)
   Future<models.Category?> getCategoryByName(String name) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       AppConstants.categoryTable,
-      where: 'name = ?',
+      where: 'name = ? COLLATE NOCASE',
       whereArgs: [name],
       limit: 1,
     );
